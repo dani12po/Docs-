@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Menu, Search, Globe } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import { useSearch } from '@/components/search/SearchProvider';
 import { MobileDrawer } from './MobileDrawer';
-import { LOCALES, type Locale, getNav, slugFromPath } from '@/lib/nav';
-import { rememberLocale } from '@/lib/locale-storage';
+import { type Locale } from '@/lib/nav';
 import clsx from 'clsx';
 
 export function TopNav() {
@@ -32,23 +31,12 @@ export function TopNav() {
 
   const m = /^\/docs\/(id|en)\/(.+)?/.exec(pathname);
   const locale = (m?.[1] as Locale) || 'id';
-  const slug = m?.[2] ?? '';
 
   const headerLinks = [
     { label: locale === 'en' ? 'Home' : 'Beranda', href: '/' },
     { label: locale === 'en' ? 'Docs' : 'Dokumentasi', href: `/docs/${locale}/memulai/pengenalan` },
     { label: 'Roadmap', href: `/docs/${locale}/roadmap` },
   ];
-
-  const switchLocale = (target: Locale) => {
-    // Try to keep the same page when switching locales; if the page doesn't
-    // exist in the target locale, fall back to that locale's first page.
-    const targetSlugs = new Set(
-      getNav(target).flatMap((g) => g.items.map((i) => slugFromPath(i.path).join('/'))),
-    );
-    const keep = targetSlugs.has(slug);
-    return `/docs/${target}/${keep ? slug : 'memulai/pengenalan'}`;
-  };
 
   return (
     <>
@@ -96,23 +84,6 @@ export function TopNav() {
                 </Link>
               );
             })}
-
-            <div className="ml-1 flex items-center gap-1 rounded-lg border border-line bg-surface-1 p-1">
-              <Globe className="ml-1 h-3.5 w-3.5 text-ink-muted" />
-              {LOCALES.map((l) => (
-                <Link
-                  key={l}
-                  href={switchLocale(l)}
-                  onClick={() => rememberLocale(l)}
-                  className={clsx(
-                    'rounded-md px-2 py-1 text-[11px] font-medium uppercase tracking-wide transition-colors',
-                    l === locale ? 'bg-surface-2 text-gold' : 'text-ink-muted hover:text-ink-primary',
-                  )}
-                >
-                  {l}
-                </Link>
-              ))}
-            </div>
           </nav>
 
           <button

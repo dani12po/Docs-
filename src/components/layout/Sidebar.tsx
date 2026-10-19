@@ -3,50 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useState } from 'react';
-import { ChevronRight, Search, Globe } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 import clsx from 'clsx';
-import { getNav, slugFromPath, DEFAULT_LOCALE, LOCALES, type Locale } from '@/lib/nav';
-import { rememberLocale } from '@/lib/locale-storage';
+import { getNav, DEFAULT_LOCALE } from '@/lib/nav';
 import { useSearch } from '@/components/search/SearchProvider';
-
-function LocaleSwitcher({ locale, slug }: { locale: string; slug: string }) {
-  const other = locale === 'en' ? 'id' : 'en';
-  // Build a set of slug strings ("memulai/pengenalan") for the target locale so
-  // we can keep the user on the same page when switching, or fall back.
-  const targetSlugs = new Set(
-    getNav(other).flatMap((g) => g.items.map((i) => slugFromPath(i.path).join('/'))),
-  );
-  const keep = targetSlugs.has(slug);
-  const href = `/docs/${other}/${keep ? slug : 'memulai/pengenalan'}`;
-
-  return (
-    <div className="mt-3 flex items-center gap-1 rounded-lg border border-line bg-surface-1 p-1">
-      <Globe className="ml-1 h-3.5 w-3.5 shrink-0 text-ink-muted" />
-      {LOCALES.map((l: Locale) => {
-        const isTarget = l === other;
-        return (
-          <Link
-            key={l}
-            href={isTarget ? href : '#'}
-            onClick={
-              isTarget
-                ? () => rememberLocale(l)
-                : (e) => e.preventDefault()
-            }
-            className={clsx(
-              'flex-1 rounded-md px-2 py-1 text-center text-[11px] font-medium uppercase tracking-wide transition-colors',
-              l === locale
-                ? 'bg-surface-2 text-gold'
-                : 'text-ink-muted hover:text-ink-primary',
-            )}
-          >
-            {l}
-          </Link>
-        );
-      })}
-    </div>
-  );
-}
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -54,8 +14,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const currentLocale = (locale as string) || DEFAULT_LOCALE;
   const NAV = getNav(currentLocale);
   const { open } = useSearch();
-
-  const slug = pathname.replace(/^\/docs\/(id|en)\//, '');
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -82,8 +40,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           ⌘K
         </kbd>
       </button>
-
-      <LocaleSwitcher locale={currentLocale} slug={slug} />
 
       <div className="mt-3 space-y-4">
         {NAV.map((group) => {

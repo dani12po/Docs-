@@ -2,31 +2,24 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  getRememberedLocale,
-  detectLocaleFromBrowser,
-  rememberLocale,
-} from '@/lib/locale-storage';
+import { detectLocaleFromBrowser } from '@/lib/locale-storage';
 
 /**
- * Client-side locale detection for the static docs site.
+ * /docs — auto-redirect ke locale yang sesuai dengan bahasa browser user.
  *
- * Landing on /docs picks a locale by:
- *   1. a previously saved choice in localStorage, then
- *   2. the browser's primary language (en-* -> 'en', anything else -> 'id'), then
- *   3. the default locale ('id').
+ * Karena tidak ada locale switcher manual, locale ditentukan sepenuhnya
+ * dari navigator.language setiap kali user mengunjungi /docs:
+ *   - en-* → /docs/en/memulai/pengenalan
+ *   - semua lainnya → /docs/id/memulai/pengenalan
  *
- * Because the site is statically exported (no middleware at runtime), locale
- * detection has to happen in the browser. The chosen locale is remembered so
- * the choice sticks on future visits (and is honored by the locale switcher).
+ * Tidak ada localStorage yang disimpan — setiap kunjungan fresh selalu
+ * mendeteksi ulang dari bahasa browser.
  */
 export default function DocsIndex() {
   const router = useRouter();
 
   useEffect(() => {
-    const saved = getRememberedLocale();
-    const locale = saved ?? detectLocaleFromBrowser();
-    if (!saved) rememberLocale(locale);
+    const locale = detectLocaleFromBrowser();
     router.replace(`/docs/${locale}/memulai/pengenalan`);
   }, [router]);
 
