@@ -1,0 +1,11 @@
+# robots.txt — https://docs.koramp.xyz/
+# Mengizinkan semua crawler mengindeks seluruh dokumentasi KORAMP.
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://docs.koramp.xyz/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
