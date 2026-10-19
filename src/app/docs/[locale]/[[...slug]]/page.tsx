@@ -71,7 +71,13 @@ export default async function DocPage({ params }: { params: DocParams }) {
           <MDXRemote
             source={page.content}
             components={mdxComponents}
-            options={{ mdxOptions: { remarkPlugins, rehypePlugins } }}
+            options={{
+              // blockJS defaults to true in next-mdx-remote v6 (CVE-2026-0969).
+              // Safe to disable here — all MDX is trusted first-party content,
+              // never user-submitted. Required for rehype-pretty-code to compile.
+              blockJS: false,
+              mdxOptions: { remarkPlugins, rehypePlugins },
+            }}
           />
         </div>
       </article>
