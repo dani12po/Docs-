@@ -84,6 +84,14 @@ export function TopNav() {
                 </Link>
               );
             })}
+            <a
+              href="https://www.koramp.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 rounded-lg border border-gold/40 bg-gold/10 px-3 py-1.5 text-sm font-medium text-gold transition-colors hover:border-gold/70 hover:bg-gold/20"
+            >
+              {locale === 'en' ? 'Open App' : 'Buka App'}
+            </a>
           </nav>
 
           <button

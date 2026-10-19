@@ -5,12 +5,13 @@ import { SearchProvider } from '@/components/search/SearchProvider';
 import { TopNav } from '@/components/layout/TopNav';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://docs.koramp.xyz'),
   title: {
     default: 'Dokumentasi KORAMP',
     template: '%s · KORAMP Docs',
   },
   description:
-    'Dokumentasi KORAMP — Crypto On/Off-Ramp IDR, wallet-first, tanpa registrasi akun.',
+    'Dokumentasi resmi KORAMP — platform crypto on/off-ramp IDR terpercaya. Panduan Top Up, Sell, integrasi API, dan arsitektur wallet-first.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

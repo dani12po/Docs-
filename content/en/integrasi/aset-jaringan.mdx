@@ -1,49 +1,52 @@
 ---
 title: "Assets & Networks"
-description: "Supported KORAMP assets and networks: SOL, ETH, BNB on Solana Devnet, Base Sepolia, and BSC Testnet."
+description: "Supported KORAMP assets and active mainnet networks: SOL on Solana, ETH on Base, BNB on BNB Smart Chain."
 ---
 
 ## Supported Assets
 
-| Asset | Network | Chain ID | Testnet | Wallet type |
-|---|---|---|---|---|
-| SOL | Solana | — | Devnet | Solana |
-| ETH | Base | 84532 | Sepolia | EVM |
-| BNB | BSC | 97 | Testnet | EVM |
+| Asset | Network | Chain ID | Ecosystem |
+|---|---|---|---|
+| SOL | Solana Mainnet | — | Solana |
+| ETH | Base Mainnet | 8453 | EVM |
+| BNB | BNB Smart Chain | 56 | EVM |
 
-Ramp (Top Up and Sell) is active on all three. Mainnet support and additional assets are on the roadmap.
+Ramp (Top Up and Sell) is active on all three.
 
-## Adding Testnet Networks to EVM Wallets
+<Callout type="info" title="Mainnet">
+KORAMP operates on mainnet with real assets. All transactions use native tokens on production networks.
+</Callout>
 
-If a wallet doesn't recognize the testnet chain (MetaMask error 4902), auto-add it:
+## Adding EVM Networks to Your Wallet
 
-**Base Sepolia (84532)**:
-- Chain ID: `0x14A34`
-- RPC: `https://sepolia.base.org`
-- Explorer: `https://sepolia.basescan.org`
-- Currency: Sepolia Ether (ETH)
+If your wallet doesn't recognize the network, you can add it manually:
 
-**BSC Testnet (97)**:
-- Chain ID: `0x61`
-- RPC: `https://data-seed-prebsc-1-s1.binance.org:8545`
-- Explorer: `https://testnet.bscscan.com`
-- Currency: tBNB (BNB)
+**Base Mainnet (8453)**:
+- Chain ID: `0x2105`
+- RPC: `https://mainnet.base.org`
+- Explorer: `https://basescan.org`
+- Currency: ETH
+
+**BNB Smart Chain (56)**:
+- Chain ID: `0x38`
+- RPC: `https://bsc-dataseed.binance.org`
+- Explorer: `https://bscscan.com`
+- Currency: BNB
 
 ## Explorers
 
 | Network | Explorer |
 |---|---|
-| Solana Devnet | `https://solscan.io/tx/?cluster=devnet&tx=<hash>` |
-| Base Sepolia | `https://sepolia.basescan.org/tx/<hash>` |
-| BSC Testnet | `https://testnet.bscscan.com/tx/<hash>` |
+| Solana Mainnet | `https://solscan.io/tx/<hash>` |
+| Base Mainnet | `https://basescan.org/tx/<hash>` |
+| BNB Smart Chain | `https://bscscan.com/tx/<hash>` |
 
 ## SOL ATA Fee
 
 For SOL Top Up, if the recipient wallet doesn't yet have an Associated Token Account (ATA), an ATA creation fee (`solAtaFeeIdr` in `FeeConfig`) is deducted directly from the SOL the user receives. This covers the ATA creation cost.
 
-## Roadmap
+## Upcoming Assets
 
-- Mainnet networks (Solana Mainnet, Base Mainnet, BSC Mainnet).
-- Additional assets (e.g. stablecoins USDC/USDT).
+Additional assets such as stablecoins (USDC/USDT) are on the development roadmap.
 
 See the [Roadmap](/docs/en/roadmap) for the full plan.

@@ -25,6 +25,14 @@ const ID_NAV: NavGroup[] = [
     ],
   },
   {
+    label: 'Panduan Pengguna',
+    items: [
+      { title: 'Cara Top Up', path: '/docs/id/panduan-pengguna/cara-top-up' },
+      { title: 'Cara Sell', path: '/docs/id/panduan-pengguna/cara-sell' },
+      { title: 'Wallet yang Didukung', path: '/docs/id/panduan-pengguna/wallet-yang-didukung' },
+    ],
+  },
+  {
     label: 'Integrasi',
     items: [
       { title: 'On-Ramp & Off-Ramp', path: '/docs/id/integrasi/on-ramp-off-ramp' },
@@ -70,6 +78,14 @@ const EN_NAV: NavGroup[] = [
       { title: 'Introduction', path: '/docs/en/memulai/pengenalan' },
       { title: 'Quickstart', path: '/docs/en/memulai/quickstart' },
       { title: 'Core Concepts', path: '/docs/en/memulai/konsep-inti' },
+    ],
+  },
+  {
+    label: 'User Guide',
+    items: [
+      { title: 'How to Top Up', path: '/docs/en/panduan-pengguna/cara-top-up' },
+      { title: 'How to Sell', path: '/docs/en/panduan-pengguna/cara-sell' },
+      { title: 'Supported Wallets', path: '/docs/en/panduan-pengguna/wallet-yang-didukung' },
     ],
   },
   {
