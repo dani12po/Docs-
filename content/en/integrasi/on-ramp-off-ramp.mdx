@@ -1,0 +1,200 @@
+---
+title: "On-Ramp & Off-Ramp"
+description: "KORAMP's flagship guide: converting IDR to crypto (Top Up) and back (Sell) with the wallet-first model."
+---
+
+## Introduction
+
+This guide is for developers and product teams who want to understand and integrate IDR↔crypto ramps with KORAMP. KORAMP provides two directions:
+
+- **On-Ramp (Top Up)**: the user pays Indonesian Rupiah (IDR) and receives crypto to their wallet.
+- **Off-Ramp (Sell)**: the user sends crypto and receives IDR to their bank account.
+
+KORAMP is **wallet-first**: no account required — a wallet address is the user's identity.
+
+<Callout type="warning" title="KORAMP privacy model">
+KORAMP uses **public** on-chain transfers. Sender, receiver, and amount are **visible on the blockchain**. KORAMP does not offer encrypted balances or private transfers. Privacy comes from the no-account model, wallet-as-identity, and masked display in the public ledger.
+</Callout>
+
+## Field Visibility
+
+The two tables below show the visibility level for each field in each direction.
+
+<div className="not-prose grid gap-6 md:grid-cols-2">
+  <div className="rounded-lg border border-line bg-surface-1 p-4">
+    <div className="mb-3 text-sm font-semibold text-gold">On-Ramp (Top Up)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Visibility</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>IDR Payment (QRIS)</td>
+          <td>Off-chain only</td>
+          <td>Fiat payment is processed by Xendit; not recorded on-chain.</td>
+        </tr>
+        <tr>
+          <td>Asset</td>
+          <td>Public on-chain</td>
+          <td>The crypto sent is recorded on the blockchain.</td>
+        </tr>
+        <tr>
+          <td>Amount</td>
+          <td>Public on-chain</td>
+          <td>On-chain transfers are public.</td>
+        </tr>
+        <tr>
+          <td>Sender</td>
+          <td>Public on-chain</td>
+          <td>Platform hot wallet address is publicly visible.</td>
+        </tr>
+        <tr>
+          <td>Recipient</td>
+          <td>Public on-chain</td>
+          <td>User wallet address is publicly visible.</td>
+        </tr>
+        <tr>
+          <td>Memo (optional)</td>
+          <td>Public on-chain if set</td>
+          <td>Only added when required.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div className="rounded-lg border border-line bg-surface-1 p-4">
+    <div className="mb-3 text-sm font-semibold text-gold">Off-Ramp (Sell)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Visibility</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>IDR Payout (Bank)</td>
+          <td>Off-chain only</td>
+          <td>Bank payout is processed by Xendit; not recorded on-chain.</td>
+        </tr>
+        <tr>
+          <td>Asset</td>
+          <td>Public on-chain</td>
+          <td>Crypto sent by user is recorded on the blockchain.</td>
+        </tr>
+        <tr>
+          <td>Amount</td>
+          <td>Public on-chain</td>
+          <td>On-chain transfers are public.</td>
+        </tr>
+        <tr>
+          <td>Sender</td>
+          <td>Public on-chain</td>
+          <td>User wallet address is publicly visible.</td>
+        </tr>
+        <tr>
+          <td>Recipient</td>
+          <td>Public on-chain</td>
+          <td>Platform deposit address is publicly visible.</td>
+        </tr>
+        <tr>
+          <td>Memo (optional)</td>
+          <td>Public on-chain if set</td>
+          <td>Only added when required.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+## Requirements
+
+Before integrating, make sure you have:
+
+1. An EVM or Solana wallet for the user, matching the selected asset.
+2. A supported asset on a supported network (SOL, ETH, or BNB on testnet).
+3. An IDR amount within the minimum and maximum limits for that asset.
+4. The ability to sign messages to prove wallet ownership (EVM and Solana).
+5. A callback endpoint or webhook to receive payment status notifications from the provider.
+
+## Assets and Inventory
+
+1. **SOL on Solana Devnet** — Top Up and Sell ramp active. Account for the Associated Token Account (ATA) creation fee on recipient wallets that don't yet have an ATA.
+2. **ETH on Base Sepolia (chain 84532)** — ramp active. EVM wallets need to add the Base Sepolia network if not already known.
+3. **BNB on BSC Testnet (chain 97)** — ramp active. EVM wallets need to add the BSC Testnet network if not already known.
+
+<Callout type="info" title="Testnet">
+The ramp currently runs on testnet networks. See the [Assets & Networks](/docs/en/integrasi/aset-jaringan) page for chain IDs and explorers.
+</Callout>
+
+## Compliance Considerations
+
+### Information You Can See
+
+| Information | On-chain | Off-chain |
+|---|---|---|
+| Sender address | Yes, public | Yes, public |
+| Recipient address | Yes, public | Yes, public |
+| Amount | Yes, public | Yes, public |
+| Bank payout details | No | Last 4 digits only displayed |
+| Wallet address in public ledger | Masked | Masked |
+
+### Wallet Screening
+
+KORAMP applies wallet screening as part of security operations. Current stance: screening focuses on abuse detection and rate limiting, not third-party compliance analytics. KORAMP does not claim coverage equivalent to dedicated compliance providers.
+
+### Travel Rule
+
+KORAMP uses a KYC-less wallet-first model. As a result, classic Travel Rule mechanisms (collecting and exchanging sender/recipient data between institutions) **are not available**. This is adapted by maintaining an internal audit trail: no accounts, wallet-as-identity, and a publicly masked ledger.
+
+## Mapping Your Existing Flow
+
+| Existing step | KORAMP step |
+|---|---|
+| Send fiat | Pay via Xendit QRIS (scan and pay) |
+| Receive crypto | Crypto sent to destination wallet |
+| Sell crypto | Send to platform deposit address |
+| Withdraw IDR | Fiat payout to bank via Xendit Payout v3 |
+
+## Records and Audit
+
+Every significant transaction is recorded in the double-entry ledger and audit log:
+
+| Component | Function |
+|---|---|
+| AuditLog | Records important actions with actor and metadata. |
+| LedgerEntry | Double-entry records (CREDIT/DEBIT) per wallet and asset. |
+| XenditWebhook | Xendit webhook idempotency keyed on kind, event, paymentRequestId, and payoutId. |
+
+## Transaction Flow
+
+### 1. On-Ramp
+
+1. User requests a TOP_UP quote.
+2. Create a Top Up order and obtain a Xendit QRIS payment payload.
+3. User scans the QRIS code and pays.
+4. Xendit webhook notifies the server that payment succeeded.
+5. Platform sends crypto to the destination wallet.
+6. Order is marked complete when `completedAt` is set.
+
+### 2. Off-Ramp
+
+1. User requests a SELL quote.
+2. Create a Sell order and obtain the platform deposit address.
+3. User sends crypto to the deposit address.
+4. Scheduler scans the deposit and tracks confirmations.
+5. Once confirmations are sufficient, fiat payout is sent via Xendit Payout v3.
+6. Order is marked complete when the payout succeeds.
+
+## Start Integrating
+
+With an understanding of on-chain visibility and the flows above, you can start building a KORAMP ramp integration.
+
+<Callout type="info" title="Next steps">
+Continue to [Transaction Flow](/docs/en/integrasi/alur-transaksi) for the technical details of each step, or open [API Reference](/docs/en/api-reference) for the endpoint list.
+</Callout>

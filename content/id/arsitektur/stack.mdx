@@ -1,0 +1,39 @@
+---
+title: "Stack"
+description: "Teknologi utama KORAMP: Next.js, React, TypeScript, Prisma, Redis, Tailwind, dan library blockchain."
+---
+
+## Kerangka Kerja
+
+| Komponen | Versi | Peran |
+|---|---|---|
+| Next.js | 14.2.35 | Kerangka App Router (aplikasi utama). |
+| React | 18.2.0 | Antarmuka pengguna. |
+| TypeScript | 5.3.3 | Pengetikan statis. |
+| Prisma | 5.7.1 | ORM dan skema database. |
+| PostgreSQL | Neon | Basis data utama. |
+| Redis | ioredis 5.11 | Pembatasan laju dan cache. |
+
+## Antarmuka
+
+- **Tailwind CSS** 3.4.0 untuk styling.
+- **ethers** 6.9 dan **viem** 2.56 untuk interaksi EVM.
+- **@solana/web3.js** 1.99 untuk interaksi Solana.
+- **zod** 3.22 untuk validasi input.
+
+## Integrasi Pembayaran
+
+- **Xendit QRIS API** untuk pembayaran fiat (Top Up).
+- **Xendit Payout v3** untuk transfer Rupiah ke bank (Sell).
+
+Provider legacy KiPay, TransFi, dan Xendit sudah pensiun; kolom database disimpan untuk riwayat saja.
+
+## Keamanan
+
+- **jose** 5.2 untuk token sesi.
+- TOTP untuk faktor kedua admin.
+- Redis untuk pembatasan laju.
+
+## Dokumentasi Ini
+
+Situs dokumentasi ini memakai stack yang sama: Next.js 14.2.35, React 18.2.0, TypeScript 5.3.3, dan Tailwind 3.4.0, dengan MDX sebagai format konten.

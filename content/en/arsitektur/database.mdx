@@ -1,0 +1,72 @@
+---
+title: "Database"
+description: "KORAMP's main Prisma models: assets, orders, payments, payouts, ledger, audit, security, and rewards."
+---
+
+## Overview
+
+KORAMP uses PostgreSQL (Neon) with Prisma. Below are the main models grouped by function.
+
+## Assets and Networks
+
+| Model | Function |
+|---|---|
+| Network | Network definitions (SOLANA, BASE, BSC). |
+| Asset | Asset definitions (SOL, ETH, BNB) and network relation. |
+| PlatformWallet | Platform hot wallets per network. |
+
+## Quotes and Orders
+
+| Model | Function |
+|---|---|
+| Quote | Locked price offer (TOP_UP / SELL) with atomic consumption via `usedAt`. |
+| TopUpOrder | Top Up order, from `CREATED` toward `completedAt`. |
+| SellOrder | Sell order with `confirmations` and `requiredConfirmations`. |
+
+## Payments, Crypto, and Payouts
+
+| Model | Function |
+|---|---|
+| Payment | Xendit payment (QRIS) for Top Up. |
+| CryptoDeposit | Crypto deposit for Sell. |
+| CryptoWithdrawal | Crypto withdrawal for Top Up. |
+| Payout | IDR bank payout for Sell. |
+| XenditWebhook | Xendit webhook trail with idempotency. |
+
+## Ledger and Audit
+
+| Model | Function |
+|---|---|
+| LedgerEntry | Double-entry record (CREDIT/DEBIT). |
+| AuditLog | Trail of important actions. |
+| SystemSetting | Key-based system settings. |
+| FeeConfig | Fee configuration per asset and type. |
+
+## Security
+
+| Model | Function |
+|---|---|
+| SecurityEvent | Security events aggregated per hour. |
+| IpBan | Progressive temporary IP bans. |
+| AdminAccessKey | Admin credential (multi-factor, single-device session). |
+
+## Analytics and Support
+
+| Model | Function |
+|---|---|
+| PageVisit | Page analytics (path + UTC day only). |
+| SupportTicket | Wallet-based support tickets. |
+| SupportMessage | Ticket conversation. |
+
+## Wallet Challenge and Rewards
+
+| Model | Function |
+|---|---|
+| WalletChallenge | Single-use nonce for proof of ownership. |
+| RewardConfig | Reward configuration (singleton). |
+| RewardCycle | Monthly reward cycle. |
+| RewardClaim | Reward claim with PENDING_PAYOUT status. |
+
+## Legacy Providers
+
+The `KipayWebhook` and `TransfiWebhook` models are kept for history of retired providers. New orders never write to them.

@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --base: #08080a;
+  --surface-1: #141416;
+  --surface-2: #1a1a1e;
+  --surface-3: #232326;
+  --line-subtle: #232326;
+  --line: #2a2a2e;
+  --line-strong: #333338;
+  --gold: #d4b78f;
+  --gold-hover: #e2c9a5;
+  --green: #22c55e;
+  --ink-primary: #f5f5f5;
+  --ink-secondary: #cfcfd4;
+  --ink-muted: #8b8b93;
+  --ink-disabled: #5a5a60;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-base text-ink-primary font-sans antialiased;
+  }
+  ::selection {
+    background: rgba(212, 183, 143, 0.25);
+  }
+}
+
+@layer components {
+  .prose {
+    --tw-prose-body: #cfcfd4;
+    --tw-prose-headings: #f5f5f5;
+    --tw-prose-lead: #cfcfd4;
+    --tw-prose-links: #d4b78f;
+    --tw-prose-bold: #f5f5f5;
+    --tw-prose-counters: #8b8b93;
+    --tw-prose-bullets: #8b8b93;
+    --tw-prose-hr: #2a2a2e;
+    --tw-prose-quotes: #cfcfd4;
+    --tw-prose-quote-borders: #d4b78f;
+    --tw-prose-code: #d4b78f;
+    --tw-prose-pre-bg: #141416;
+    --tw-prose-pre-code: #cfcfd4;
+    --tw-prose-th-borders: #2a2a2e;
+    --tw-prose-td-borders: #232326;
+  }
+
+  .prose h2,
+  .prose h3 {
+    scroll-margin-top: 5rem;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    display: block;
+    overflow-x: auto;
+  }
+  .prose th {
+    background-color: #141416;
+    color: #cfcfd4;
+    text-align: left;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #2a2a2e;
+    white-space: nowrap;
+  }
+  .prose td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #232326;
+    color: #cfcfd4;
+    vertical-align: top;
+  }
+
+  .prose ol {
+    counter-reset: koramp-step;
+  }
+  .prose ol > li {
+    position: relative;
+    list-style: none;
+    padding-left: 2.25rem;
+    counter-increment: koramp-step;
+  }
+  .prose ol > li::before {
+    content: counter(koramp-step);
+    position: absolute;
+    left: 0;
+    top: 0.1rem;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    background-color: rgba(212, 183, 143, 0.12);
+    color: #d4b78f;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .prose :not(pre) > code {
+    background-color: #1a1a1e;
+    border: 1px solid #2a2a2e;
+    border-radius: 0.375rem;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.85em;
+    color: #d4b78f;
+  }
+  .prose :not(pre) > code::before,
+  .prose :not(pre) > code::after {
+    content: none;
+  }
+}

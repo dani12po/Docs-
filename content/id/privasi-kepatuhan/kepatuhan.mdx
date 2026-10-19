@@ -1,0 +1,36 @@
+---
+title: "Kepatuhan"
+description: "Model KYC-less KORAMP, apa yang terlihat on-chain dan off-chain, serta audit trail."
+---
+
+## Model KYC-Less
+
+KORAMP dirancang tanpa proses Know Your Customer (KYC) untuk alur ritel. Alamat dompet adalah identitas, bukan akun terdaftar. Konsekuensinya, KORAMP tidak mengumpulkan dokumen identitas atau data diri pelanggan.
+
+<Callout type="info" title="Implikasi">
+Tanpa KYC, KORAMP tidak dapat menyediakan mekanisme kepatuhan yang bergantung pada identitas terverifikasi (misalnya Travel Rule klasik). Ini adalah trade-off desain yang disengaja.
+</Callout>
+
+## On-Chain vs Off-Chain
+
+| Informasi | On-chain | Off-chain |
+|---|---|---|
+| Alamat pengirim | Terlihat publik | Terlihat publik |
+| Alamat penerima | Terlihat publik | Terlihat publik |
+| Jumlah | Terlihat publik | Terlihat publik |
+| Detail bank payout | Tidak ada | Hanya 4 digit terakhir |
+| Identitas terverifikasi | Tidak ada | Tidak ada |
+
+## Audit Trail
+
+KORAMP menjaga jejak audit internal meskipun tanpa KYC:
+
+- **AuditLog** mencatat aksi penting, aktor, dan metadata.
+- **LedgerEntry** mencatat pergerakan dana secara double-entry (CREDIT/DEBIT).
+- **XenditWebhook** memastikan setiap event webhook hanya diproses sekali.
+
+## Batas Kepatuhan
+
+KORAMP tidak mengklaim kepatuhan penuh terhadap kerangka yang mengharuskan identifikasi pengguna. Tim kepatuhan/AML dan tooling Travel Rule berada di roadmap masa depan.
+
+Lihat [Catatan & Audit](/docs/id/privasi-kepatuhan/catatan-audit) untuk detail pencatatan.

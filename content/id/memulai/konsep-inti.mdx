@@ -1,0 +1,50 @@
+---
+title: "Konsep Inti"
+description: "Model wallet-first, quote, serta perbedaan Top Up dan Sell beserta aset dan jaringan."
+---
+
+## Wallet-First
+
+KORAMP tidak memakai tabel pengguna untuk pelanggan. Alamat dompet adalah identitas transaksi. Konsekuensinya:
+
+- Tidak ada proses registrasi, email, atau kata sandi.
+- Pengguna tetap memegang private key mereka.
+- Riwayat order dilacak melalui alamat dompet, bukan akun.
+
+## Quote
+
+Quote adalah penawaran harga yang **terkunci** pada saat dibuat. Quote menyimpan:
+
+- Harga pasar acuan.
+- Spread.
+- Biaya layanan.
+- Biaya jaringan.
+- Pajak.
+- Jumlah Rupiah total dan jumlah crypto.
+- Waktu kedaluwarsa.
+
+Quote dikonsumsi secara atomik: begitu dipakai untuk membuat order, quote ditandai terpakai dan tidak bisa dipakai ulang.
+
+## Top Up vs Sell
+
+- **Top Up (on-ramp)**: pengguna membayar Rupiah via Xendit QRIS, lalu crypto dikirim ke dompet tujuan. Arah nilai: Rupiah masuk, crypto keluar.
+- **Sell (off-ramp)**: pengguna mengirim crypto ke alamat deposit platform, lalu Rupiah ditransfer ke rekening bank. Arah nilai: crypto masuk, Rupiah keluar.
+
+Keduanya menggunakan model quote yang sama, tetapi alur pembayaran dan konfirmasinya berbeda.
+
+## Aset dan Jaringan
+
+| Aset | Jaringan | Chain ID | Ekosistem Dompet |
+|---|---|---|---|
+| SOL | Solana Devnet | - | Solana |
+| ETH | Base Sepolia | 84532 | EVM |
+| BNB | BSC Testnet | 97 | EVM |
+
+Ramp aktif di ketiga jaringan tersebut. Pemilihan aset menentukan ekosistem dompet (Solana atau EVM) yang harus dipakai pengguna.
+
+## Status Order
+
+- Order Top Up bergerak dari `CREATED` menuju selesai saat `completedAt` terisi.
+- Order Sell melacak konfirmasi deposit lewat `confirmations` dan `requiredConfirmations`.
+
+Pelajari detail alurnya di [Alur Transaksi](/docs/id/integrasi/alur-transaksi).

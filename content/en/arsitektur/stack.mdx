@@ -1,0 +1,39 @@
+---
+title: "Stack"
+description: "KORAMP's core technologies: Next.js, React, TypeScript, Prisma, Redis, Tailwind, and blockchain libraries."
+---
+
+## Framework
+
+| Component | Version | Role |
+|---|---|---|
+| Next.js | 14.2.35 | App Router framework (main app). |
+| React | 18.2.0 | User interface. |
+| TypeScript | 5.3.3 | Static typing. |
+| Prisma | 5.7.1 | ORM and database schema. |
+| PostgreSQL | Neon | Primary database. |
+| Redis | ioredis 5.11 | Rate limiting and cache. |
+
+## Interfaces
+
+- **Tailwind CSS** 3.4.0 for styling.
+- **ethers** 6.9 and **viem** 2.56 for EVM interaction.
+- **@solana/web3.js** 1.99 for Solana interaction.
+- **zod** 3.22 for input validation.
+
+## Payment Integration
+
+- **Xendit Payments API v3** for QRIS fiat payments (Top Up).
+- **Xendit Payout API v3** for IDR bank transfers (Sell).
+
+Legacy providers KiPay and TransFi are retired; database columns are kept for history only.
+
+## Security
+
+- **jose** 5.2 for session tokens.
+- TOTP for admin second factor.
+- Redis for rate limiting.
+
+## This Documentation Site
+
+This docs site uses the same stack: Next.js 14.2.35, React 18.2.0, TypeScript 5.3.3, and Tailwind 3.4.0, with MDX as the content format.

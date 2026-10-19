@@ -1,0 +1,405 @@
+---
+title: "MoonPay Widget"
+description: "Integrate the MoonPay Widget as an alternative payment gateway for on-ramp (buy crypto) and off-ramp (sell crypto). MoonPay acts as the merchant of record, handling KYC/AML, fraud, and compliance."
+---
+
+## Overview
+
+The MoonPay Widget lets users **buy (on-ramp)** and **sell (off-ramp)** cryptocurrency directly inside your application. As the **merchant of record**, MoonPay takes full responsibility for fraud, chargebacks, KYC/AML, and regulatory compliance in every supported region.
+
+Within KORAMP, MoonPay acts as an **alternative payment gateway** alongside the native Xendit/QRIS IDR flow. KORAMP remains wallet-first — the wallet address is the user's identity; no account or password is required.
+
+<Callout type="info" title="MoonPay as an alternative gateway">
+  MoonPay handles KYC, fraud, and compliance as the merchant of record. Buy/sell availability depends on the user's region and the selected asset — see the [On-Ramp Overview](https://dev.moonpay.com/widget/on-ramp/overview) and [Off-Ramp Overview](https://dev.moonpay.com/widget/off-ramp/overview) for the list of supported regions.
+</Callout>
+
+## Prerequisites
+
+- A MoonPay Business account — sign up at [dashboard.moonpay.com](https://dashboard.moonpay.com)
+- **Publishable API Key** (prefix `pk_`) — safe to use on the client side
+- **Secret Key** (prefix `sk_`) — **server-side only**, must never be exposed to the client
+- Your application domain whitelisted in the MoonPay dashboard (**Developers → Allowed Domains**)
+- Use `sandbox` environment for testing; `production` for live traffic
+
+## Installation
+
+### npm (recommended)
+
+```bash
+npm install @moonpay/moonpay-js
+```
+
+Then import the `loadMoonPay` function:
+
+```ts
+import { loadMoonPay } from '@moonpay/moonpay-js';
+```
+
+### Script tag
+
+Alternatively, load the SDK via a `<script>` tag — the SDK will be available as `window.MoonPayWebSdk`:
+
+```html
+<script src="https://static.moonpay.com/web-sdk/v1/moonpay-web-sdk.min.js" defer></script>
+```
+
+Both approaches provide identical functionality. Choose the one that fits your project setup best.
+
+## On-Ramp (Buy)
+
+### Transaction flow
+
+1. The user opens the widget (flow `buy`) — selects a cryptocurrency and the fiat amount they want to spend
+2. MoonPay handles login, KYC (for new users), and payment verification
+3. The user selects a payment method (credit/debit card, bank transfer, Apple Pay, Google Pay, etc.)
+4. Once payment is verified, crypto is sent to the pre-filled wallet address or the one the user enters
+
+### Integration example (overlay)
+
+```tsx
+import { loadMoonPay } from '@moonpay/moonpay-js';
+
+// First, fetch a signed URL from your backend (see URL Signing)
+const signedUrl = await fetch('/api/moonpay/sign-url', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    flow: 'buy',
+    currencyCode: 'eth',
+    walletAddress: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',
+    baseCurrencyCode: 'idr',
+    baseCurrencyAmount: '500000',
+    externalTransactionId: 'koramp_order_abc123',
+  }),
+}).then((r) => r.json()).then((d) => d.signedUrl);
+
+// Initialize the SDK with the signed URL
+const init = await loadMoonPay();
+const sdk = new init({
+  flow: 'buy',
+  environment: 'sandbox',
+  variant: 'overlay',
+  params: { signedUrl },
+  onCloseOverlay: () => {
+    console.log('Widget closed by user');
+  },
+});
+
+sdk.show();
+```
+
+### Integration example (embedded)
+
+```tsx
+const sdk = new init({
+  flow: 'buy',
+  environment: 'sandbox',
+  variant: 'embedded',
+  containerNodeSelector: '#moonpay-container',
+  params: {
+    apiKey: process.env.NEXT_PUBLIC_MOONPAY_API_KEY,
+    currencyCode: 'eth',
+    baseCurrencyCode: 'idr',
+    externalTransactionId: 'koramp_order_abc123',
+    // If walletAddress is included, a signed URL is REQUIRED
+  },
+});
+// For embedded, do not call sdk.show()
+```
+
+<Callout type="warning" title="URL Signing required for walletAddress">
+  If you pre-fill `walletAddress` or `walletAddresses`, the widget URL **must be signed** (HMAC-SHA256) server-side before it is shown to the user. Without a valid signature, the widget will fail to load. See the **URL Signing** section below.
+</Callout>
+
+## Off-Ramp (Sell)
+
+### Transaction flow
+
+1. The user opens the widget (flow `sell`) — selects a cryptocurrency and the amount they want to sell
+2. MoonPay handles login and KYC (for new users)
+3. The user selects a payout method (bank transfer)
+4. The user confirms the sale
+5. The partner app (KORAMP) sends crypto to MoonPay's deposit address on behalf of the user
+6. Once the deposit is verified, MoonPay sends a fiat payout to the user's bank account
+
+<Callout type="warning" title="Deposit timeout — 48 hours">
+  The crypto deposit must reach MoonPay within **48 hours** of the sell transaction being created. If it does not arrive in time, the transaction fails with the status `Deposit timeout`. Always send crypto promptly after the user confirms in the widget.
+</Callout>
+
+### Integration example (off-ramp)
+
+```tsx
+import { loadMoonPay } from '@moonpay/moonpay-js';
+
+const init = await loadMoonPay();
+const sdk = new init({
+  flow: 'sell',
+  environment: 'sandbox',
+  variant: 'overlay',
+  params: {
+    apiKey: process.env.NEXT_PUBLIC_MOONPAY_API_KEY,
+    baseCurrencyCode: 'eth',         // crypto to sell
+    quoteCurrencyCode: 'idr',        // fiat the user receives
+    baseCurrencyAmount: '0.01',
+    email: 'user@example.com',
+    externalTransactionId: 'koramp_sell_xyz789',
+    // refundWalletAddress: '0x...' → if included, a signed URL is REQUIRED
+  },
+  onCloseOverlay: () => console.log('Widget closed'),
+});
+
+sdk.show();
+```
+
+<Callout type="info" title="refundWalletAddress vs walletAddress">
+  For the `sell` flow, use `refundWalletAddress` (not `walletAddress`) to specify where funds should be returned if a refund is issued. Including `refundWalletAddress` or `refundWalletAddresses` also **requires URL signing**.
+</Callout>
+
+## Widget Configuration
+
+### Common parameters (both flows)
+
+| Parameter | Type | Description |
+|---|---|---|
+| `flow` | string | `'buy'` (on-ramp) or `'sell'` (off-ramp) |
+| `environment` | string | `'sandbox'` or `'production'` |
+| `variant` | string | `'overlay'`, `'embedded'`, `'newTab'`, `'newWindow'` |
+| `containerNodeSelector` | string | CSS selector for the `embedded` variant (required when embedded) |
+| `onCloseOverlay` | function | Callback when the overlay is closed (overlay variant only) |
+| `useWarnBeforeRefresh` | boolean | Default `true`; disable in webviews if it causes redirect errors |
+| `email` | string | Pre-fill the user's email address |
+| `externalTransactionId` | string | Your system's transaction ID (for idempotency and tracking) |
+| `externalCustomerId` | string | Your system's customer ID |
+| `theme` | string | `'dark'` or `'light'` |
+| `redirectURL` | string | Redirect URL after the transaction completes (HTTPS or Universal Link) |
+| `paymentMethod` | string | Pre-select a payment or payout method |
+
+### On-Ramp parameters (flow `buy`)
+
+| Parameter | Type | Description |
+|---|---|---|
+| `apiKey` | string | Publishable API key (required) |
+| `currencyCode` | string | Crypto to purchase (e.g. `'eth'`, `'sol'`, `'bnb'`) |
+| `walletAddress` | string | Destination wallet address — **signed URL required** |
+| `walletAddresses` | string | JSON string of multi-crypto wallet addresses — **signed URL required** |
+| `baseCurrencyCode` | string | Fiat currency code (e.g. `'idr'`, `'usd'`) |
+| `baseCurrencyAmount` | number | Amount of fiat the user wants to spend |
+| `lockAmount` | boolean | Lock the amount so the user cannot change it |
+| `showAllCurrencies` | boolean | Show all cryptos even if not all have a wallet address |
+
+### Off-Ramp parameters (flow `sell`)
+
+| Parameter | Type | Description |
+|---|---|---|
+| `apiKey` | string | Publishable API key (required) |
+| `baseCurrencyCode` | string | Crypto to sell (e.g. `'eth'`, `'sol'`) |
+| `baseCurrencyAmount` | number | Amount of crypto to sell |
+| `quoteCurrencyCode` | string | Fiat currency to receive (e.g. `'idr'`, `'usd'`, `'eur'`) |
+| `quoteCurrencyAmount` | number | Fiat equivalent amount; `baseCurrencyAmount` takes precedence if both are set |
+| `refundWalletAddress` | string | Refund wallet address — **signed URL required** |
+| `refundWalletAddresses` | string | JSON string of multi-crypto refund addresses — **signed URL required** |
+| `lockAmount` | boolean | Lock the amount so the user cannot change it |
+
+## URL Signing
+
+Whenever you pre-fill sensitive information — `walletAddress`, `walletAddresses`, `refundWalletAddress`, or `refundWalletAddresses` — the widget URL **must be signed** with your Secret Key before it is sent to the user. If the signature is missing or invalid, MoonPay will refuse to load the widget.
+
+<Callout type="danger" title="Secret Key is server-side only">
+  The Secret Key (`sk_`) must never reach the browser or be included in client-side code under any circumstances. All signing must happen on your backend.
+</Callout>
+
+### How it works
+
+1. Build the complete widget URL with all query parameters on your server
+2. Use the Secret Key to generate an HMAC-SHA256 of the **full query string** (including the leading `?`)
+3. Base64-encode the result, then URL-encode it
+4. Append `&signature=<url-encoded-signature>` at the **very end of the URL**
+5. Return the signed URL to the client; the client uses it directly to initialize the widget
+
+### Manual example (Node.js / server-side)
+
+```ts
+import crypto from 'crypto';
+
+export function signMoonPayUrl(url: string, secretKey: string): string {
+  // Extract the query string (includes the leading '?')
+  const urlObj = new URL(url);
+  const queryString = urlObj.search; // e.g. "?apiKey=pk_test_...&walletAddress=0x..."
+
+  // Generate HMAC-SHA256, encode to base64
+  const signature = crypto
+    .createHmac('sha256', secretKey)
+    .update(queryString)
+    .digest('base64');
+
+  // URL-encode the signature and append it last
+  return `${url}&signature=${encodeURIComponent(signature)}`;
+}
+
+// Example usage in a Next.js API route
+// app/api/moonpay/sign-url/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  const { currencyCode, walletAddress, baseCurrencyCode, baseCurrencyAmount, externalTransactionId } =
+    await req.json();
+
+  const params = new URLSearchParams({
+    apiKey: process.env.MOONPAY_PUBLISHABLE_KEY!,
+    currencyCode,
+    walletAddress,
+    baseCurrencyCode,
+    baseCurrencyAmount: String(baseCurrencyAmount),
+    externalTransactionId,
+  });
+
+  const baseUrl = `https://buy-sandbox.moonpay.com/?${params.toString()}`;
+  const signedUrl = signMoonPayUrl(baseUrl, process.env.MOONPAY_SECRET_KEY!);
+
+  return NextResponse.json({ signedUrl });
+}
+```
+
+### Using the moonpay-node SDK
+
+MoonPay provides a Node.js SDK (`moonpay-node`) that simplifies signing:
+
+```bash
+npm install moonpay-node
+```
+
+```ts
+import MoonPay from 'moonpay-node';
+
+const moonPay = new MoonPay(process.env.MOONPAY_SECRET_KEY!);
+
+// Return only the signature (no URL-encoding — the SDK handles it)
+const signature = moonPay.url.generateSignature(
+  'https://buy-sandbox.moonpay.com/?apiKey=pk_test_...&walletAddress=0x...'
+);
+
+// Or return the full signed URL
+const signedUrl = moonPay.url.generateSignature(
+  'https://buy-sandbox.moonpay.com/?apiKey=pk_test_...&walletAddress=0x...',
+  { returnFullURL: true }
+);
+```
+
+Reference: [URL Signing — MoonPay Docs](https://dev.moonpay.com/docs/on-ramp-enhance-security-using-signed-urls)
+
+## Webhooks
+
+MoonPay sends real-time transaction status notifications to a webhook endpoint you configure in the dashboard. This is essential for asynchronously updating KORAMP order statuses — especially for the off-ramp flow where crypto sending and deposit verification take time.
+
+### Configuration
+
+1. Open **MoonPay Dashboard → Developers → Webhooks**
+2. Click **Add Endpoint** and enter your server URL
+3. Select the event types you want to receive (e.g. `transaction_updated`)
+4. Copy the **Webhook API Key** from the dashboard — this is separate from the Secret Key and is used exclusively for webhook signature verification
+
+### Signature verification
+
+Every webhook request includes a `Moonpay-Signature-V2` header in the format `t=<timestamp>,s=<signature>`. The signature is an HMAC-SHA256 of `<timestamp>.<raw request body>` keyed with the **Webhook API Key** (not the Secret Key).
+
+```ts
+import crypto from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  const signatureHeader = req.headers.get('moonpay-signature-v2') ?? '';
+
+  // Parse header: "t=1234567890,s=abc123..."
+  const parts = Object.fromEntries(
+    signatureHeader.split(',').map((part) => part.split('=') as [string, string])
+  );
+  const timestamp = parts['t'];
+  const receivedSig = parts['s'];
+
+  // Compute expected signature
+  const expectedSig = crypto
+    .createHmac('sha256', process.env.MOONPAY_WEBHOOK_KEY!) // Webhook API Key
+    .update(`${timestamp}.${rawBody}`)
+    .digest('hex');
+
+  if (expectedSig !== receivedSig) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const event = JSON.parse(rawBody);
+
+  // Idempotency: check whether this event has already been processed
+  // use event.type + event.data.id + event.data.updatedAt as the dedup key
+
+  console.log('MoonPay webhook event:', event.type, event.data?.id);
+
+  return NextResponse.json({ received: true });
+}
+```
+
+<Callout type="warning" title="At-least-once delivery">
+  MoonPay retries failed webhook deliveries up to 9 times. Your handler must be **idempotent** — deduplicate using `event.type + transaction id + updatedAt`. Respond with a `2xx` status within 5 seconds; do any heavy processing asynchronously.
+</Callout>
+
+### Status mapping
+
+MoonPay sends various events to update transaction status. Conceptual mapping to KORAMP order states:
+
+| MoonPay Event | KORAMP Order State (conceptual) |
+|---|---|
+| `transaction_created` | Order created, awaiting action |
+| `transaction_updated` (pending) | Payment/deposit is being processed |
+| `transaction_updated` (completed) | Transaction complete — mark order `COMPLETED` |
+| `transaction_updated` (failed) | Transaction failed — mark order `FAILED` |
+
+For the full list of events and statuses, see the [Webhooks Overview](https://dev.moonpay.com/api-reference/widget/webhooks/overview).
+
+## Variants
+
+| Variant | Description | When to use |
+|---|---|---|
+| `overlay` | Widget appears as an iframe over the page | Default — keeps the user within your app |
+| `embedded` | Widget is embedded inside a DOM element (`containerNodeSelector` required) | Seamless in-page experience |
+| `newTab` | Widget opens in a new browser tab | Full-screen experience; inform users they are being taken to MoonPay |
+| `newWindow` | Widget opens in a popup with a fixed size | Controlled experience outside the main tab |
+
+`useWarnBeforeRefresh` (default `true`) prompts users before they refresh or navigate away from the widget. Inside a mobile webview, this can cause errors when redirecting back to your app — disable it with `useWarnBeforeRefresh: false` if needed.
+
+## Testing
+
+Use `environment: 'sandbox'` for all testing. Sandbox uses:
+
+- API keys prefixed `pk_test_` (publishable) and `sk_test_` (secret)
+- Base URLs `https://buy-sandbox.moonpay.com` (on-ramp) and `https://sell-sandbox.moonpay.com` (off-ramp)
+- Sandbox transactions do not move real funds
+- KYC in sandbox can be completed with dummy data
+
+Visit [MoonPay Developer Docs](https://dev.moonpay.com) for test cards and test data provided by MoonPay.
+
+## Security
+
+- **Never** expose the Secret Key (`sk_`) in client-side code or environment variables accessible to the browser
+- **Always sign URLs** server-side before sending them to the client when the URL contains `walletAddress`, `walletAddresses`, `refundWalletAddress`, or `refundWalletAddresses`
+- **Verify webhook signatures** using the Webhook API Key (not the Secret Key)
+- **Implement idempotency** in your webhook handler using `externalTransactionId` or the combination of `event.type + transaction id + updatedAt`
+- Use `externalTransactionId` to track and reconcile MoonPay transactions with KORAMP orders
+
+<Callout type="danger" title="Protect your Secret Key">
+  An exposed Secret Key allows third parties to sign widget URLs containing any user's wallet address. Store it in a server-side environment variable and never commit it to a repository.
+</Callout>
+
+## Resources
+
+- [On-Ramp Overview](https://dev.moonpay.com/widget/on-ramp/overview)
+- [Off-Ramp Overview](https://dev.moonpay.com/widget/off-ramp/overview)
+- [Web SDK — Import & Initialize](https://dev.moonpay.com/docs/on-ramp-web-sdk)
+- [On-Ramp Widget Parameters](https://dev.moonpay.com/widget/on-ramp/customization/parameters)
+- [Off-Ramp Widget Parameters](https://dev.moonpay.com/widget/off-ramp/customization/parameters)
+- [URL Signing](https://dev.moonpay.com/docs/on-ramp-enhance-security-using-signed-urls)
+- [Webhooks Overview](https://dev.moonpay.com/api-reference/widget/webhooks/overview)
+- [Webhook Signature Verification](https://dev.moonpay.com/reference/reference-webhooks-signature)
+- [Node.js SDK (moonpay-node)](https://dev.moonpay.com/docs/off-ramp-node-sdk)
+- [Demo Integrations (GitHub)](https://github.com/moonpay/moonpay-demo-integrations)
+
+> _Content on this page is summarised and paraphrased from the official MoonPay Developer Docs for licensing compliance._

@@ -1,0 +1,67 @@
+---
+title: "Roadmap"
+description: "KORAMP's four-phase roadmap: shipped MVP, active rewards program, planned mainnet, and the future."
+---
+
+## Legend
+
+Each phase has a status badge:
+
+| Badge | Meaning |
+|---|---|
+| Shipped | Released and running. |
+| Active | Currently running/under development. |
+| Planned | In the next plan. |
+| Future | Long-term vision. |
+
+## Phase 1 — MVP
+
+<Badge status="shipped">Shipped</Badge>
+
+The initial phase delivers a complete wallet-first ramp for Top Up and Sell.
+
+- Top Up via Xendit QRIS to crypto in the wallet.
+- Sell via crypto deposit to IDR bank payout via Xendit Payout v3.
+- Assets SOL, ETH, and BNB on testnet (Solana Devnet, Base Sepolia, BSC Testnet).
+- Quotes with locked pricing (spread, service fee, network fee, tax).
+- Progressive IP bans and Redis rate limiting.
+- Admin access key and TOTP.
+- Support tickets.
+- Privacy-preserving page analytics.
+- Double-entry ledger and audit log.
+
+## Phase 2 — Active
+
+<Badge status="active">Active</Badge>
+
+The transaction-based rewards program is running, with payouts in DRY-RUN mode.
+
+- Eligibility, progress tracking, and claim reservation.
+- DRY-RUN payouts only: no on-chain treasury access, no signing, no transfers; claims stay `PENDING_PAYOUT`.
+- Per-cycle (monthly) qualification.
+- Anti-fraud review.
+- Terms versioning (`termsVersion 2026-09-v1`).
+
+## Phase 3 — Planned
+
+<Badge status="planned">Planned</Badge>
+
+The next phase moves rewards on-chain and opens mainnet networks.
+
+- Live on-chain reward payouts (broadcast real transactions, confirmation tracking via `confirmations`/`requiredConfirmations`).
+- Mainnet networks (Solana Mainnet, Base Mainnet, BSC Mainnet).
+- Additional assets (e.g. stablecoins USDC/USDT).
+- Webhook reliability hardening.
+
+## Phase 4 — Future
+
+<Badge status="future">Future</Badge>
+
+KORAMP's long-term vision for a broader ecosystem.
+
+- Compliance, AML, and Travel Rule tooling.
+- Merchant/hosted-checkout API for third parties.
+- Additional fiat rails beyond Xendit QRIS.
+- Expanded payout rails.
+- Multi-language documentation.
+- Public SDK.

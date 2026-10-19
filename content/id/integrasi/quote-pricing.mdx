@@ -1,0 +1,36 @@
+---
+title: "Quote & Pricing"
+description: "Komponen harga KORAMP: harga pasar, spread, biaya layanan, biaya jaringan, pajak, dan konsumsi atomik."
+---
+
+## Komponen Harga
+
+Setiap quote menyimpan rincian harga berikut:
+
+| Komponen | Deskripsi |
+|---|---|
+| marketPrice | Harga pasar acuan untuk aset. |
+| spread | Selisih yang ditambahkan ke harga pasar. |
+| serviceFee | Biaya layanan KORAMP. |
+| networkFee | Biaya jaringan/on-chain. |
+| tax | Pajak yang berlaku. |
+| totalIdr | Jumlah Rupiah total. |
+| cryptoAmount | Jumlah crypto yang diterima atau dikirim. |
+
+## Kunci Harga (Locked Price)
+
+Quote menyediakan harga terkunci: selama quote belum kedaluwarsa dan belum dipakai, harga tidak berubah meskipun harga pasar bergerak.
+
+## Konsumsi Atomik
+
+Quote hanya dapat dipakai sekali. Setelah dipakai untuk membuat order, quote ditandai terpakai melalui `usedAt` dan tidak bisa dipakai ulang.
+
+## Kedaluwarsa
+
+Setiap quote memiliki `expiresAt`. Setelah lewat waktu tersebut, quote tidak valid dan pengguna perlu membuat quote baru.
+
+## Batas dan Biaya
+
+Batas minimum dan maksimum Rupiah, serta biaya layanan dan jaringan, dikonfigurasi per aset dan tipe (Top Up atau Sell). Konfigurasi ini dapat berubah dan dikelola lewat panel admin.
+
+Lihat [API Reference](/docs/id/api-reference) untuk endpoint `/quotes/topup` dan `/quotes/sell`.

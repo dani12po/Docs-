@@ -1,0 +1,29 @@
+---
+title: "Wallet-First"
+description: "Why KORAMP has no users table, and how a wallet address becomes the customer identity."
+---
+
+## No Users Table
+
+KORAMP has no `users` table for customers. A wallet address is the identity. Every order is tied to a combination of `walletAddress` and network.
+
+## Design Consequences
+
+- No registration flow, no customer login, no passwords.
+- Users keep their private keys.
+- No custody of user funds.
+- Order history is traceable through the wallet address.
+
+## Proof of Ownership
+
+To prove wallet ownership, KORAMP uses a challenge mechanism:
+
+1. **Challenge**: the user requests a nonce and message to sign.
+2. **Verify**: the user submits the signature, which the server verifies.
+3. **Single-use**: the challenge is valid once and has an expiry.
+
+The challenge is used for reward claims and support, not for account login.
+
+## Identity in the Public Ledger
+
+In the public ledger, wallet addresses are masked into a form like `0x1234...abcd`. There's no direct link from the raw address to personal identity in the public presentation.

@@ -1,0 +1,60 @@
+---
+title: "Quickstart"
+description: "Langkah singkat menyiapkan integrasi KORAMP: aset, dompet, quote, dan order."
+---
+
+## Prasyarat
+
+Sebelum mulai, pastikan Anda sudah memahami konsep dasar berikut:
+
+- Model wallet-first dan alamat dompet sebagai identitas.
+- Perbedaan Top Up (Rupiah ke crypto) dan Sell (crypto ke Rupiah).
+- Aset dan jaringan yang didukung (saat ini testnet).
+
+## 1. Pilih Aset dan Jaringan
+
+Tentukan aset yang akan digunakan. Setiap aset terikat pada satu jaringan:
+
+| Aset | Jaringan | Chain ID |
+|---|---|---|
+| SOL | Solana Devnet | - |
+| ETH | Base Sepolia | 84532 |
+| BNB | BSC Testnet | 97 |
+
+## 2. Validasi Dompet
+
+Gunakan endpoint validasi dompet untuk memastikan kombinasi alamat, jaringan, dan aset cocok. Untuk EVM, pengguna perlu menandatangani pesan untuk membuktikan kepemilikan (proof-of-ownership).
+
+## 3. Buat Quote
+
+Quote memberikan harga terkunci untuk jumlah Rupiah atau crypto yang diinginkan. Quote menyimpan komponen harga: harga pasar, spread, biaya layanan, biaya jaringan, dan pajak.
+
+## 4. Buat Order
+
+Setelah quote dibuat, lanjutkan ke pembuatan order:
+
+- **Top Up**: buat order Top Up, bayar via Xendit QRIS, lalu crypto dikirim ke dompet tujuan setelah pembayaran terverifikasi.
+- **Sell**: buat order Sell, kirim crypto ke alamat deposit platform, lalu payout Rupiah dikirim setelah deposit terkonfirmasi.
+
+<AnimatedFlowchart
+  flows={[
+    {
+      title: 'Alur Integrasi',
+      direction: 'Dari aset hingga order',
+      steps: [
+        { icon: 'Wallet', label: 'Aset & Jaringan', desc: 'SOL, ETH, atau BNB di testnet' },
+        { icon: 'ShieldCheck', label: 'Validasi Dompet', desc: 'Alamat + proof-of-ownership' },
+        { icon: 'FileText', label: 'Buat Quote', desc: 'Harga terkunci via API' },
+        { icon: 'ArrowRightLeft', label: 'Buat Order', desc: 'Top Up atua Sell via API' },
+      ],
+    },
+  ]}
+/>
+
+## 5. Pantau Status
+
+Pantau status order dan deposit lewat endpoint status. Untuk Sell, konfirmasi on-chain dilacak lewat jumlah konfirmasi.
+
+## Langkah Berikutnya
+
+Lihat [Alur Transaksi](/docs/id/integrasi/alur-transaksi) untuk detail alur lengkap, atau [Quote & Pricing](/docs/id/integrasi/quote-pricing) untuk komponen harga.

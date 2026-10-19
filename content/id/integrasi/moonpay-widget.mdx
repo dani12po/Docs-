@@ -1,0 +1,406 @@
+---
+title: "MoonPay Widget"
+description: "Integrasi MoonPay Widget sebagai payment gateway alternatif untuk on-ramp (beli crypto) dan off-ramp (jual crypto). MoonPay bertindak sebagai merchant of record yang menangani KYC/AML, fraud, dan compliance."
+---
+
+## Overview
+
+MoonPay Widget memungkinkan pengguna untuk **membeli (on-ramp)** dan **menjual (off-ramp)** cryptocurrency langsung di dalam aplikasi Anda. Sebagai **merchant of record**, MoonPay menanggung tanggung jawab penuh atas fraud, chargeback, KYC/AML, serta memastikan kepatuhan terhadap regulasi yang berlaku di setiap wilayah.
+
+Di KORAMP, MoonPay berfungsi sebagai **payment gateway alternatif** di samping alur native QRIS via Xendit. KORAMP tetap bersifat wallet-first — alamat dompet adalah identitas pengguna, tidak ada akun atau password.
+
+<Callout type="info" title="MoonPay sebagai gateway alternatif">
+  MoonPay menangani KYC, fraud, dan compliance sebagai merchant of record. Ketersediaan fitur beli/jual bergantung pada wilayah dan aset — lihat [On-Ramp Overview](https://dev.moonpay.com/widget/on-ramp/overview) dan [Off-Ramp Overview](https://dev.moonpay.com/widget/off-ramp/overview) untuk daftar wilayah yang didukung.
+</Callout>
+
+## Prasyarat
+
+- Akun MoonPay Business — daftar di [dashboard.moonpay.com](https://dashboard.moonpay.com)
+- **Publishable API Key** (prefix `pk_`) — aman dipakai di sisi klien
+- **Secret Key** (prefix `sk_`) — **hanya dipakai di sisi server**, tidak boleh terekspos ke klien
+- Domain aplikasi sudah di-whitelist di dashboard MoonPay (bagian **Developers → Allowed Domains**)
+- Gunakan environment `sandbox` untuk testing; `production` untuk live
+
+## Instalasi
+
+### npm (direkomendasikan)
+
+```bash
+npm install @moonpay/moonpay-js
+```
+
+Lalu import fungsi `loadMoonPay`:
+
+```ts
+import { loadMoonPay } from '@moonpay/moonpay-js';
+```
+
+### Script tag
+
+Sebagai alternatif, muat SDK via tag `<script>` — SDK akan tersedia sebagai `window.MoonPayWebSdk`:
+
+```html
+<script src="https://static.moonpay.com/web-sdk/v1/moonpay-web-sdk.min.js" defer></script>
+```
+
+Kedua pendekatan menghasilkan fungsionalitas yang identik. Pilih sesuai preferensi proyek.
+
+## On-Ramp (Beli Crypto)
+
+### Alur transaksi
+
+1. Pengguna membuka widget (flow `buy`) — memilih cryptocurrency dan jumlah fiat yang ingin dibelanjakan
+2. MoonPay menangani login, KYC (jika pertama kali), dan verifikasi pembayaran
+3. Pengguna memilih metode pembayaran (kartu kredit/debit, bank transfer, Apple Pay, Google Pay, dll.)
+4. Setelah pembayaran terverifikasi, crypto dikirim ke wallet address yang telah di-pre-fill atau yang dimasukkan pengguna
+
+### Contoh integrasi (overlay)
+
+```tsx
+import { loadMoonPay } from '@moonpay/moonpay-js';
+
+// Dapatkan signed URL dari backend terlebih dahulu (lihat URL Signing)
+const signedUrl = await fetch('/api/moonpay/sign-url', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    flow: 'buy',
+    currencyCode: 'eth',
+    walletAddress: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',
+    baseCurrencyCode: 'idr',
+    baseCurrencyAmount: '500000',
+    externalTransactionId: 'koramp_order_abc123',
+  }),
+}).then((r) => r.json()).then((d) => d.signedUrl);
+
+// Inisialisasi SDK dengan signed URL
+const init = await loadMoonPay();
+const sdk = new init({
+  flow: 'buy',
+  environment: 'sandbox',
+  variant: 'overlay',
+  params: { signedUrl },
+  onCloseOverlay: () => {
+    console.log('Widget ditutup oleh pengguna');
+  },
+});
+
+sdk.show();
+```
+
+### Contoh integrasi (embedded)
+
+```tsx
+const sdk = new init({
+  flow: 'buy',
+  environment: 'sandbox',
+  variant: 'embedded',
+  containerNodeSelector: '#moonpay-container',
+  params: {
+    apiKey: process.env.NEXT_PUBLIC_MOONPAY_API_KEY,
+    currencyCode: 'eth',
+    baseCurrencyCode: 'idr',
+    externalTransactionId: 'koramp_order_abc123',
+    // Jika walletAddress diisi, WAJIB menggunakan signed URL
+  },
+});
+// Untuk embedded, tidak perlu memanggil sdk.show()
+```
+
+<Callout type="warning" title="URL Signing wajib untuk walletAddress">
+  Jika Anda men-pre-fill `walletAddress` atau `walletAddresses`, URL widget **wajib ditandatangani** (HMAC-SHA256) di sisi server sebelum ditampilkan. Tanpa signature yang valid, widget gagal dimuat. Lihat bagian **URL Signing** di bawah.
+</Callout>
+
+## Off-Ramp (Jual Crypto)
+
+### Alur transaksi
+
+1. Pengguna membuka widget (flow `sell`) — memilih cryptocurrency dan jumlah yang ingin dijual
+2. MoonPay menangani login dan KYC (untuk pengguna baru)
+3. Pengguna memilih metode payout (transfer bank)
+4. Pengguna mengonfirmasi penjualan
+5. Partner app (KORAMP) mengirim crypto ke deposit address MoonPay atas nama pengguna
+6. Setelah deposit terverifikasi, MoonPay mengirim payout fiat ke rekening bank pengguna
+
+<Callout type="warning" title="Deposit timeout — 48 jam">
+  Deposit crypto harus tiba di MoonPay dalam **48 jam** setelah transaksi dibuat. Jika tidak, transaksi gagal dengan status `Deposit timeout`. Selalu kirim crypto segera setelah pengguna mengonfirmasi di widget.
+</Callout>
+
+### Contoh integrasi (off-ramp)
+
+```tsx
+import { loadMoonPay } from '@moonpay/moonpay-js';
+
+const init = await loadMoonPay();
+const sdk = new init({
+  flow: 'sell',
+  environment: 'sandbox',
+  variant: 'overlay',
+  params: {
+    apiKey: process.env.NEXT_PUBLIC_MOONPAY_API_KEY,
+    baseCurrencyCode: 'eth',         // crypto yang akan dijual
+    quoteCurrencyCode: 'idr',        // fiat yang diterima pengguna
+    baseCurrencyAmount: '0.01',
+    email: 'user@example.com',
+    externalTransactionId: 'koramp_sell_xyz789',
+    // refundWalletAddress: '0x...' → jika diisi, WAJIB signed URL
+  },
+  onCloseOverlay: () => console.log('Widget ditutup'),
+});
+
+sdk.show();
+```
+
+<Callout type="info" title="refundWalletAddress vs walletAddress">
+  Pada flow `sell`, gunakan `refundWalletAddress` (bukan `walletAddress`) untuk wallet pengembalian dana jika terjadi refund. Mengisi `refundWalletAddress` atau `refundWalletAddresses` juga **mewajibkan URL signing**.
+</Callout>
+
+## Konfigurasi Widget
+
+### Parameter umum (kedua flow)
+
+| Parameter | Tipe | Deskripsi |
+|---|---|---|
+| `flow` | string | `'buy'` (on-ramp) atau `'sell'` (off-ramp) |
+| `environment` | string | `'sandbox'` atau `'production'` |
+| `variant` | string | `'overlay'`, `'embedded'`, `'newTab'`, `'newWindow'` |
+| `containerNodeSelector` | string | CSS selector untuk variant `embedded` (wajib jika embedded) |
+| `onCloseOverlay` | function | Callback ketika overlay ditutup (hanya variant `overlay`) |
+| `useWarnBeforeRefresh` | boolean | Default `true`; nonaktifkan di webview jika menyebabkan error redirect |
+| `email` | string | Pre-fill email pengguna |
+| `externalTransactionId` | string | ID transaksi dari sistem Anda (untuk idempotency & tracking) |
+| `externalCustomerId` | string | ID customer dari sistem Anda |
+| `theme` | string | `'dark'` atau `'light'` |
+| `redirectURL` | string | URL redirect setelah transaksi selesai (HTTPS atau Universal Link) |
+| `paymentMethod` | string | Pre-select metode pembayaran/payout |
+
+### Parameter On-Ramp (flow `buy`)
+
+| Parameter | Tipe | Deskripsi |
+|---|---|---|
+| `apiKey` | string | Publishable API key (wajib) |
+| `currencyCode` | string | Kode crypto yang dibeli (misal: `'eth'`, `'sol'`, `'bnb'`) |
+| `walletAddress` | string | Wallet address tujuan — **wajib signed URL** |
+| `walletAddresses` | string | JSON string multi-crypto wallet addresses — **wajib signed URL** |
+| `baseCurrencyCode` | string | Kode fiat (misal: `'idr'`, `'usd'`) |
+| `baseCurrencyAmount` | number | Jumlah fiat yang ingin dibelanjakan |
+| `lockAmount` | boolean | Kunci jumlah agar tidak bisa diubah pengguna |
+| `showAllCurrencies` | boolean | Tampilkan semua crypto meski tidak semua punya wallet address |
+
+### Parameter Off-Ramp (flow `sell`)
+
+| Parameter | Tipe | Deskripsi |
+|---|---|---|
+| `apiKey` | string | Publishable API key (wajib) |
+| `baseCurrencyCode` | string | Kode crypto yang dijual (misal: `'eth'`, `'sol'`) |
+| `baseCurrencyAmount` | number | Jumlah crypto yang ingin dijual |
+| `quoteCurrencyCode` | string | Kode fiat yang diterima (misal: `'idr'`, `'usd'`, `'eur'`) |
+| `quoteCurrencyAmount` | number | Jumlah fiat ekuivalen; `baseCurrencyAmount` lebih diprioritaskan jika keduanya diisi |
+| `refundWalletAddress` | string | Wallet address pengembalian — **wajib signed URL** |
+| `refundWalletAddresses` | string | JSON string multi-crypto refund addresses — **wajib signed URL** |
+| `lockAmount` | boolean | Kunci jumlah agar tidak bisa diubah pengguna |
+
+## URL Signing
+
+Setiap kali Anda men-pre-fill informasi sensitif — `walletAddress`, `walletAddresses`, `refundWalletAddress`, atau `refundWalletAddresses` — URL widget **wajib ditandatangani** dengan Secret Key sebelum ditampilkan ke pengguna. Tanpa tanda tangan yang valid, MoonPay menolak memuat widget.
+
+<Callout type="danger" title="Secret Key hanya di sisi server">
+  Secret Key (`sk_`) tidak boleh terekspos ke browser atau kode klien dalam kondisi apapun. Seluruh proses signing harus terjadi di backend.
+</Callout>
+
+### Cara kerja
+
+1. Bangun URL widget lengkap dengan semua query parameter di sisi server
+2. Gunakan Secret Key untuk membuat HMAC-SHA256 dari **query string** (termasuk karakter `?` di awal)
+3. Encode hasil base64 dengan URL encoding
+4. Tambahkan `&signature=<url-encoded-signature>` di **akhir URL**
+5. Kembalikan signed URL ke klien; klien menggunakannya langsung untuk menginisialisasi widget
+
+### Contoh manual (Node.js / server-side)
+
+```ts
+import crypto from 'crypto';
+
+export function signMoonPayUrl(url: string, secretKey: string): string {
+  // Ambil query string (termasuk '?')
+  const urlObj = new URL(url);
+  const queryString = urlObj.search; // contoh: "?apiKey=pk_test_...&walletAddress=0x..."
+
+  // Generate HMAC-SHA256, encode ke base64
+  const signature = crypto
+    .createHmac('sha256', secretKey)
+    .update(queryString)
+    .digest('base64');
+
+  // URL-encode signature lalu tambahkan di akhir URL
+  return `${url}&signature=${encodeURIComponent(signature)}`;
+}
+
+// Contoh penggunaan di API route Next.js
+// app/api/moonpay/sign-url/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  const { currencyCode, walletAddress, baseCurrencyCode, baseCurrencyAmount, externalTransactionId } =
+    await req.json();
+
+  const params = new URLSearchParams({
+    apiKey: process.env.MOONPAY_PUBLISHABLE_KEY!,
+    currencyCode,
+    walletAddress,
+    baseCurrencyCode,
+    baseCurrencyAmount: String(baseCurrencyAmount),
+    externalTransactionId,
+  });
+
+  const baseUrl = `https://buy-sandbox.moonpay.com/?${params.toString()}`;
+  const signedUrl = signMoonPayUrl(baseUrl, process.env.MOONPAY_SECRET_KEY!);
+
+  return NextResponse.json({ signedUrl });
+}
+```
+
+### Menggunakan moonpay-node SDK
+
+MoonPay menyediakan SDK Node.js (`moonpay-node`) yang menyederhanakan proses signing:
+
+```bash
+npm install moonpay-node
+```
+
+```ts
+import MoonPay from 'moonpay-node';
+
+const moonPay = new MoonPay(process.env.MOONPAY_SECRET_KEY!);
+
+// Kembalikan hanya signature (tanpa URL-encoding — SDK menanganinya)
+const signature = moonPay.url.generateSignature(
+  'https://buy-sandbox.moonpay.com/?apiKey=pk_test_...&walletAddress=0x...'
+);
+
+// Atau kembalikan URL lengkap yang sudah ditandatangani
+const signedUrl = moonPay.url.generateSignature(
+  'https://buy-sandbox.moonpay.com/?apiKey=pk_test_...&walletAddress=0x...',
+  { returnFullURL: true }
+);
+```
+
+Referensi: [URL Signing — MoonPay Docs](https://dev.moonpay.com/docs/on-ramp-enhance-security-using-signed-urls)
+
+## Webhooks
+
+MoonPay mengirimkan notifikasi status transaksi secara real-time ke endpoint webhook yang Anda konfigurasi di dashboard. Ini penting untuk memperbarui status order KORAMP secara asinkron, terutama untuk alur off-ramp di mana pengiriman crypto dan verifikasi deposit memerlukan waktu.
+
+### Konfigurasi
+
+1. Buka **MoonPay Dashboard → Developers → Webhooks**
+2. Klik **Add Endpoint** dan masukkan URL server Anda
+3. Pilih event type yang ingin Anda terima (misalnya `transaction_updated`)
+4. Catat **Webhook API Key** dari dashboard — ini berbeda dari Secret Key dan digunakan khusus untuk verifikasi signature webhook
+
+### Verifikasi signature
+
+Setiap request webhook menyertakan header `Moonpay-Signature-V2` dengan format `t=<timestamp>,s=<signature>`. Signature adalah HMAC-SHA256 dari `<timestamp>.<raw request body>` menggunakan **Webhook API Key** (bukan Secret Key).
+
+```ts
+import crypto from 'crypto';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  const signatureHeader = req.headers.get('moonpay-signature-v2') ?? '';
+
+  // Parse header: "t=1234567890,s=abc123..."
+  const parts = Object.fromEntries(
+    signatureHeader.split(',').map((part) => part.split('=') as [string, string])
+  );
+  const timestamp = parts['t'];
+  const receivedSig = parts['s'];
+
+  // Hitung expected signature
+  const expectedSig = crypto
+    .createHmac('sha256', process.env.MOONPAY_WEBHOOK_KEY!) // Webhook API Key
+    .update(`${timestamp}.${rawBody}`)
+    .digest('hex');
+
+  if (expectedSig !== receivedSig) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const event = JSON.parse(rawBody);
+
+  // Idempotency: cek apakah event sudah diproses sebelumnya
+  // gunakan kombinasi event.type + event.data.id + event.data.updatedAt
+
+  // Handle event
+  console.log('MoonPay webhook event:', event.type, event.data?.id);
+
+  return NextResponse.json({ received: true });
+}
+```
+
+<Callout type="warning" title="Pengiriman at-least-once">
+  MoonPay mengulang pengiriman webhook yang gagal hingga 9 kali. Handler Anda harus **idempotent** — deduplikasi menggunakan kombinasi `event.type + transaction id + updatedAt`. Balas dengan status `2xx` dalam 5 detik; proses berat lakukan secara asinkron.
+</Callout>
+
+### Pemetaan status
+
+MoonPay mengirim berbagai event untuk memperbarui status transaksi. Secara konseptual, pemetaan ke order KORAMP adalah:
+
+| Event MoonPay | Status Order KORAMP (konseptual) |
+|---|---|
+| `transaction_created` | Order dibuat, menunggu aksi |
+| `transaction_updated` (pending) | Pembayaran/deposit sedang diproses |
+| `transaction_updated` (completed) | Transaksi selesai — tandai order `COMPLETED` |
+| `transaction_updated` (failed) | Transaksi gagal — tandai order `FAILED` |
+
+Untuk daftar lengkap event dan status, lihat [Webhooks Overview](https://dev.moonpay.com/api-reference/widget/webhooks/overview).
+
+## Variants
+
+| Variant | Deskripsi | Kapan digunakan |
+|---|---|---|
+| `overlay` | Widget muncul sebagai iframe di atas halaman | Default — menjaga pengguna di aplikasi Anda |
+| `embedded` | Widget tertanam di dalam elemen DOM (`containerNodeSelector` wajib) | Pengalaman in-page yang mulus |
+| `newTab` | Widget terbuka di tab browser baru | Pengalaman full-screen; beritahu pengguna bahwa mereka akan dibawa ke MoonPay |
+| `newWindow` | Widget terbuka di popup window dengan ukuran tetap | Pengalaman terkontrol di luar tab utama |
+
+`useWarnBeforeRefresh` (default `true`) memunculkan peringatan jika pengguna mencoba me-refresh atau menavigasi keluar dari widget. Di dalam webview mobile, ini dapat menyebabkan error saat redirect kembali ke aplikasi — nonaktifkan dengan `useWarnBeforeRefresh: false` jika diperlukan.
+
+## Testing
+
+Gunakan `environment: 'sandbox'` untuk semua testing. Sandbox menggunakan:
+
+- API key prefix `pk_test_` (publishable) dan `sk_test_` (secret)
+- URL base `https://buy-sandbox.moonpay.com` (on-ramp) dan `https://sell-sandbox.moonpay.com` (off-ramp)
+- Transaksi sandbox tidak memindahkan dana sungguhan
+- KYC di sandbox dapat diselesaikan dengan data dummy
+
+Lihat [MoonPay Sandbox](https://dev.moonpay.com) untuk test card dan data uji yang disediakan MoonPay.
+
+## Keamanan
+
+- **Jangan pernah** mengekspos Secret Key (`sk_`) di kode klien atau environment variable yang dapat diakses browser
+- **Selalu tandatangani URL** di sisi server sebelum mengirimkannya ke klien jika URL mengandung `walletAddress`, `walletAddresses`, `refundWalletAddress`, atau `refundWalletAddresses`
+- **Verifikasi signature webhook** menggunakan Webhook API Key (bukan Secret Key)
+- **Terapkan idempotency** pada handler webhook menggunakan `externalTransactionId` atau kombinasi `event.type + transaction id + updatedAt`
+- Gunakan `externalTransactionId` untuk melacak dan mencocokkan transaksi MoonPay dengan order KORAMP
+
+<Callout type="danger" title="Secret Key wajib dilindungi">
+  Secret Key yang terekspos memungkinkan pihak ketiga menandatangani URL yang berisi wallet address milik pengguna mana pun. Simpan di environment variable server-side dan jangan pernah commit ke repository.
+</Callout>
+
+## Resources
+
+- [On-Ramp Overview](https://dev.moonpay.com/widget/on-ramp/overview)
+- [Off-Ramp Overview](https://dev.moonpay.com/widget/off-ramp/overview)
+- [Web SDK — Import & Initialize](https://dev.moonpay.com/docs/on-ramp-web-sdk)
+- [On-Ramp Widget Parameters](https://dev.moonpay.com/widget/on-ramp/customization/parameters)
+- [Off-Ramp Widget Parameters](https://dev.moonpay.com/widget/off-ramp/customization/parameters)
+- [URL Signing](https://dev.moonpay.com/docs/on-ramp-enhance-security-using-signed-urls)
+- [Webhooks Overview](https://dev.moonpay.com/api-reference/widget/webhooks/overview)
+- [Webhook Signature Verification](https://dev.moonpay.com/reference/reference-webhooks-signature)
+- [Node.js SDK (moonpay-node)](https://dev.moonpay.com/docs/off-ramp-node-sdk)
+- [Demo Integrations (GitHub)](https://github.com/moonpay/moonpay-demo-integrations)
+
+> _Konten di halaman ini dirangkum dari dokumentasi resmi MoonPay Developer Docs dan diparafrase untuk kepatuhan lisensi._

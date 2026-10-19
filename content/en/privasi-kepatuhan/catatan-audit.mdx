@@ -1,0 +1,29 @@
+---
+title: "Records & Audit"
+description: "How KORAMP records transactions: AuditLog, LedgerEntry, and webhook idempotency."
+---
+
+## Audit Log
+
+`AuditLog` records important actions with the actor (`walletAddress`, admin email, or `system`), entity, entity ID, metadata, and IP address. It's the system-of-record for who did what.
+
+## Double-Entry Ledger
+
+`LedgerEntry` is a double-entry record per wallet and asset:
+
+| Field | Description |
+|---|---|
+| `walletAddress` | The wallet the entry applies to. |
+| `asset` | IDR, SOL, ETH, or BNB. |
+| `direction` | CREDIT or DEBIT. |
+| `amount` | The entry amount. |
+| `reference` | A reference string. |
+| `topUpOrderId` / `sellOrderId` | Links to the originating order. |
+
+## Webhook Idempotency
+
+`XenditWebhook` enforces idempotency with a unique constraint on `(kind, event, paymentRequestId, xenditPayoutId)`. Re-delivered webhooks update the existing row instead of creating duplicates, preventing double-fulfillment.
+
+## Privacy-Preserving Analytics
+
+`PageVisit` records only `path` + UTC `day` with a counter — no IP, user-agent, or fingerprint. One row per `(path, day)`, so traffic never creates unbounded rows.

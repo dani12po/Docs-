@@ -1,0 +1,50 @@
+---
+title: "Core Concepts"
+description: "Wallet-first model, quote, and the difference between Top Up and Sell along with assets and networks."
+---
+
+## Wallet-First
+
+KORAMP does not use a user table for customers. The wallet address is the transaction identity. As a consequence:
+
+- No registration process, email, or passwords.
+- Users keep holding their own private keys.
+- Order history is tracked through wallet addresses, not accounts.
+
+## Quote
+
+A quote is a price offer that is **locked** when created. A quote stores:
+
+- Reference market price.
+- Spread.
+- Service fee.
+- Network fee.
+- Tax.
+- Total Rupiah amount and crypto amount.
+- Expiration time.
+
+Quotes are consumed atomically: once used to create an order, a quote is marked used and cannot be reused.
+
+## Top Up vs Sell
+
+- **Top Up (on-ramp)**: users pay Rupiah via Xendit QRIS, then crypto is sent to the destination wallet. Value direction: Rupiah in, crypto out.
+- **Sell (off-ramp)**: users send crypto to the platform deposit address, then Rupiah is transferred to their bank account. Value direction: crypto in, Rupiah out.
+
+Both use the same quote model, but the payment and confirmation flows differ.
+
+## Assets & Networks
+
+| Asset | Network | Chain ID | Wallet Ecosystem |
+|---|---|---|---|
+| SOL | Solana Devnet | - | Solana |
+| ETH | Base Sepolia | 84532 | EVM |
+| BNB | BSC Testnet | 97 | EVM |
+
+Ramping is active on all three networks. Asset selection determines the wallet ecosystem (Solana or EVM) the user must use.
+
+## Order Status
+
+- Top Up orders move from `CREATED` to complete once `completedAt` is set.
+- Sell orders track deposit confirmations via `confirmations` and `requiredConfirmations`.
+
+Learn the flow details in [Transaction Flow](/docs/en/integrasi/alur-transaksi).

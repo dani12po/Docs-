@@ -1,0 +1,49 @@
+---
+title: "Assets & Networks"
+description: "Supported KORAMP assets and networks: SOL, ETH, BNB on Solana Devnet, Base Sepolia, and BSC Testnet."
+---
+
+## Supported Assets
+
+| Asset | Network | Chain ID | Testnet | Wallet type |
+|---|---|---|---|---|
+| SOL | Solana | — | Devnet | Solana |
+| ETH | Base | 84532 | Sepolia | EVM |
+| BNB | BSC | 97 | Testnet | EVM |
+
+Ramp (Top Up and Sell) is active on all three. Mainnet support and additional assets are on the roadmap.
+
+## Adding Testnet Networks to EVM Wallets
+
+If a wallet doesn't recognize the testnet chain (MetaMask error 4902), auto-add it:
+
+**Base Sepolia (84532)**:
+- Chain ID: `0x14A34`
+- RPC: `https://sepolia.base.org`
+- Explorer: `https://sepolia.basescan.org`
+- Currency: Sepolia Ether (ETH)
+
+**BSC Testnet (97)**:
+- Chain ID: `0x61`
+- RPC: `https://data-seed-prebsc-1-s1.binance.org:8545`
+- Explorer: `https://testnet.bscscan.com`
+- Currency: tBNB (BNB)
+
+## Explorers
+
+| Network | Explorer |
+|---|---|
+| Solana Devnet | `https://solscan.io/tx/?cluster=devnet&tx=<hash>` |
+| Base Sepolia | `https://sepolia.basescan.org/tx/<hash>` |
+| BSC Testnet | `https://testnet.bscscan.com/tx/<hash>` |
+
+## SOL ATA Fee
+
+For SOL Top Up, if the recipient wallet doesn't yet have an Associated Token Account (ATA), an ATA creation fee (`solAtaFeeIdr` in `FeeConfig`) is deducted directly from the SOL the user receives. This covers the ATA creation cost.
+
+## Roadmap
+
+- Mainnet networks (Solana Mainnet, Base Mainnet, BSC Mainnet).
+- Additional assets (e.g. stablecoins USDC/USDT).
+
+See the [Roadmap](/docs/en/roadmap) for the full plan.

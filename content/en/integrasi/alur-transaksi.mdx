@@ -1,0 +1,44 @@
+---
+title: "Transaction Flow"
+description: "KORAMP Top Up and Sell flows: quote, payment, confirmation, and settlement."
+---
+
+## Overview
+
+KORAMP has two main flows that share the same quote model:
+
+- **Top Up (on-ramp)**: IDR in, crypto out.
+- **Sell (off-ramp)**: crypto in, IDR out.
+
+Both go through the quote, order creation, verification, and settlement stages.
+
+## Top Up Flow
+
+1. **Quote**: user requests a price offer. The quote stores market price, spread, service fee, network fee, and tax.
+2. **Create order**: a Top Up order is created with the destination wallet address and the quote. The quote is consumed atomically.
+3. **Fiat payment**: the system creates a Xendit QRIS payment request and returns the QR payload.
+4. **Xendit webhook**: Xendit sends a notification when payment succeeds.
+5. **Crypto delivery**: the platform sends crypto to the destination wallet and records the transaction hash.
+6. **Complete**: order status is complete when `completedAt` is set.
+
+## Sell Flow
+
+1. **Quote**: user requests a sell price offer.
+2. **Create order**: a Sell order is created with the platform deposit address and per-transaction bank payout details.
+3. **Deposit**: user sends crypto to the platform deposit address.
+4. **Scan and confirm**: the scheduler scans the deposit and tracks `confirmations` until it reaches `requiredConfirmations`.
+5. **Payout**: once confirmed, IDR is transferred to the bank account via Xendit Payout v3.
+6. **Complete**: order status is complete when the payout succeeds.
+
+## Order Statuses
+
+- **Top Up**: status moves from `CREATED` toward completion; completion time is recorded in `completedAt`.
+- **Sell**: status moves from `CREATED` toward completion; on-chain confirmation count is tracked via `confirmations` and `requiredConfirmations`.
+
+## Failures and Expiry
+
+- Quotes have an expiry time and cannot be used after that.
+- Orders that don't complete within the time limit can end with a failure reason (`failureReason`).
+- Webhooks are processed idempotently to prevent double-handling.
+
+See [Quote & Pricing](/docs/en/integrasi/quote-pricing) for price components.

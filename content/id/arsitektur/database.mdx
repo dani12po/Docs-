@@ -1,0 +1,72 @@
+---
+title: "Database"
+description: "Model Prisma utama KORAMP: aset, order, pembayaran, payout, ledger, audit, keamanan, dan reward."
+---
+
+## Ringkasan
+
+KORAMP memakai PostgreSQL (Neon) dengan Prisma. Berikut model utama yang dikelompokkan menurut fungsinya.
+
+## Aset dan Jaringan
+
+| Model | Fungsi |
+|---|---|
+| Network | Definisi jaringan (SOLANA, BASE, BSC). |
+| Asset | Definisi aset (SOL, ETH, BNB) dan relasi jaringan. |
+| PlatformWallet | Dompet hot wallet platform per jaringan. |
+
+## Quote dan Order
+
+| Model | Fungsi |
+|---|---|
+| Quote | Penawaran harga terkunci (TOP_UP / SELL) dengan konsumsi atomik via `usedAt`. |
+| TopUpOrder | Order Top Up, dari `CREATED` menuju `completedAt`. |
+| SellOrder | Order Sell dengan `confirmations` dan `requiredConfirmations`. |
+
+## Pembayaran, Crypto, dan Payout
+
+| Model | Fungsi |
+|---|---|
+| Payment | Payment Xendit (On-Ramp) untuk Top Up. |
+| CryptoDeposit | Deposit crypto untuk Sell. |
+| CryptoWithdrawal | Penarikan crypto untuk Top Up. |
+| Payout | Payout Rupiah ke bank untuk Sell. |
+| XenditWebhook | Jejak webhook Xendit dengan idempotensi. |
+
+## Ledger dan Audit
+
+| Model | Fungsi |
+|---|---|
+| LedgerEntry | Pencatatan double-entry (CREDIT/DEBIT). |
+| AuditLog | Jejak aksi penting. |
+| SystemSetting | Pengaturan sistem berbasis kunci. |
+| FeeConfig | Konfigurasi biaya per aset dan tipe. |
+
+## Keamanan
+
+| Model | Fungsi |
+|---|---|
+| SecurityEvent | Peristiwa keamanan yang diagregasi per jam. |
+| IpBan | Pemblokiran IP sementara yang progresif. |
+| AdminAccessKey | Kredensial admin (multi-faktor, sesi satu perangkat). |
+
+## Analitik dan Dukungan
+
+| Model | Fungsi |
+|---|---|
+| PageVisit | Analitik halaman (path + hari UTC saja). |
+| SupportTicket | Tiket dukungan berbasis dompet. |
+| SupportMessage | Percakapan tiket. |
+
+## Wallet Challenge dan Reward
+
+| Model | Fungsi |
+|---|---|
+| WalletChallenge | Nonce single-use untuk bukti kepemilikan. |
+| RewardConfig | Konfigurasi reward (singleton). |
+| RewardCycle | Siklus reward bulanan. |
+| RewardClaim | Klaim reward dengan status PENDING_PAYOUT. |
+
+## Provider Legacy
+
+Model `KipayWebhook` dan `TransfiWebhook` disimpan untuk riwayat provider yang sudah pensiun. Order baru tidak lagi menulis ke sana.

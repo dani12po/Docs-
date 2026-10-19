@@ -1,0 +1,71 @@
+---
+title: "Alur Transaksi"
+description: "Alur Top Up dan Sell KORAMP: quote, pembayaran, konfirmasi, dan penyelesaian."
+---
+
+## Gambaran Umum
+
+KORAMP memiliki dua alur utama yang berbagi model quote yang sama:
+
+- **Top Up (on-ramp)**: Rupiah masuk, crypto keluar.
+- **Sell (off-ramp)**: crypto masuk, Rupiah keluar.
+
+Keduanya melewati tahap quote, pembuatan order, verifikasi, dan penyelesaian.
+
+<AnimatedFlowchart
+  flows={[
+    {
+      title: 'Top Up (On-Ramp)',
+      direction: 'Rupiah masuk → crypto keluar',
+      steps: [
+        { icon: 'FileText', label: 'Quote', desc: 'Harga terkunci dibuat' },
+        { icon: 'ArrowRightLeft', label: 'Order', desc: 'TopUpOrder + payment Xendit' },
+        { icon: 'CreditCard', label: 'Bayar', desc: 'Pembayaran fiat via Xendit' },
+        { icon: 'Coins', label: 'Kirim Crypto', desc: 'Crypto dikirim ke dompet tujuan' },
+        { icon: 'ShieldCheck', label: 'Selesai', desc: 'Status COMPLETED' },
+      ],
+    },
+    {
+      title: 'Sell (Off-Ramp)',
+      direction: 'Crypto masuk → Rupiah keluar',
+      steps: [
+        { icon: 'FileText', label: 'Quote', desc: 'Harga jual terkunci' },
+        { icon: 'ArrowRightLeft', label: 'Order', desc: 'SellOrder + alamat deposit' },
+        { icon: 'Coins', label: 'Kirim Crypto', desc: 'Crypto dikirim ke deposit platform' },
+        { icon: 'Landmark', label: 'Konfirmasi', desc: 'On-chain confirmations tercapai' },
+        { icon: 'CreditCard', label: 'Payout', desc: 'Rupiah via Xendit Payout v3' },
+      ],
+    },
+  ]}
+/>
+
+## Alur Top Up
+
+1. **Quote**: pengguna meminta penawaran harga. Quote menyimpan harga pasar, spread, biaya layanan, biaya jaringan, dan pajak.
+2. **Buat order**: order Top Up dibuat dengan alamat dompet tujuan dan quote yang dipakai. Quote dikonsumsi secara atomik.
+3. **Pembayaran fiat**: sistem membuat order Xendit QRIS dan mengembalikan URL pembayaran.
+4. **Webhook Xendit**: Xendit mengirim notifikasi saat pembayaran berhasil.
+5. **Pengiriman crypto**: platform mengirim crypto ke dompet tujuan dan mencatat hash transaksi.
+6. **Selesai**: order berstatus selesai saat `completedAt` terisi.
+
+## Alur Sell
+
+1. **Quote**: pengguna meminta penawaran harga jual.
+2. **Buat order**: order Sell dibuat beserta alamat deposit platform dan detail bank payout per-transaksi.
+3. **Deposit**: pengguna mengirim crypto ke alamat deposit platform.
+4. **Pemindaian dan konfirmasi**: scheduler memindai deposit dan melacak `confirmations` hingga mencapai `requiredConfirmations`.
+5. **Payout**: setelah dikonfirmasi, fiat ditransfer ke rekening bank via Xendit Payout v3.
+6. **Selesai**: order berstatus selesai saat payout berhasil.
+
+## Status Order
+
+- **Top Up**: status bergerak dari `CREATED` menuju selesai; waktu selesai tercatat di `completedAt`.
+- **Sell**: status bergerak dari `CREATED` menuju selesai; jumlah konfirmasi on-chain dilacak lewat `confirmations` dan `requiredConfirmations`.
+
+## Gagal dan Kedaluwarsa
+
+- Quote memiliki waktu kedaluwarsa dan tidak dapat dipakai setelah itu.
+- Order yang tidak selesai dalam batas waktu dapat berakhir dengan alasan kegagalan (`failureReason`).
+- Webhook diproses secara idempoten untuk mencegah penanganan ganda.
+
+Lihat [Quote & Pricing](/docs/id/integrasi/quote-pricing) untuk komponen harga.

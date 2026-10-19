@@ -1,0 +1,141 @@
+---
+title: "API Reference"
+description: "Ringkasan grup endpoint KORAMP: quotes, orders, payments, prices, assets, wallets, rewards, support, transactions, webhooks, cron, visits, dan admin."
+---
+
+## Gambaran
+
+Halaman ini adalah ringkasan grup endpoint publik KORAMP. Tanda tangan (method dan path) mengikuti handler nyata di aplikasi. Endpoint yang tidak publik disebutkan secara jujur.
+
+## /quotes
+
+Membuat quote harga terkunci untuk Top Up atau Sell.
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| POST | /quotes/topup | Body `{asset, network, idrAmount}`. Rate limit 30/menit. |
+| POST | /quotes/sell | Body `{asset, network, idrAmount}`. Rate limit 30/menit. |
+
+## /orders
+
+Membuat dan memantau order.
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| POST | /orders/topup | Membuat TopUpOrder + order Xendit QRIS. |
+| POST | /orders/sell | Membuat SellOrder + alamat deposit + detail bank payout. |
+| GET | /orders/[publicId] | Detail order berdasarkan public ID. |
+| GET/POST | /orders/[publicId]/payment-status | Status pembayaran. |
+| GET | /orders/[publicId]/payout-status | Status payout. |
+| POST | /orders/[publicId]/check-delivery | Pengecekan pengiriman crypto. |
+| POST | /orders/[publicId]/confirmed-sent | Konfirmasi pengiriman. |
+| POST | /orders/[publicId]/poll-deposit | Pemantauan deposit. |
+| POST | /orders/[publicId]/submit-tx | Pengiriman hash transaksi. |
+
+## /payments
+
+<Callout type="warning" title="Tidak ada endpoint publik">
+Tidak ada endpoint publik `/payments` terpisah. Objek Payment (Xendit QRIS) dibuat server-side di dalam `POST /orders/topup`; statusnya diakses lewat `/orders/[publicId]/payment-status`.
+</Callout>
+
+## /prices
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| GET | /prices | Papan kurs indikatif publik (SOL/ETH/BNB live + spot + limit IDR). Read-only. |
+
+## /assets
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| GET | /assets | Daftar aset dan jaringan aktif. Cache 60 detik. |
+
+## /wallets
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| POST | /wallets/validate | Validasi kombinasi alamat/jaringan/aset. |
+| POST | /wallets/challenge | Nonce proof-of-ownership. |
+| POST | /wallets/verify | Verifikasi tanda tangan. |
+| POST | /wallets/signature | Penandatanganan. |
+| GET | /wallets/[address]/orders | Riwayat order dompet (wallet-first). |
+
+## /rewards
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| GET | /rewards | Progress dan eligibilitas reward berdasarkan dompet. |
+| POST | /rewards/claim | Reservasi klaim (Fase 2: PENDING_PAYOUT, DRY-RUN). |
+
+## /support
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| GET/POST | /support | Daftar dan kirim tiket (referensi order wajib). |
+| GET | /support/[publicId] | Detail tiket. |
+| GET/POST | /support/[publicId]/messages | Percakapan tiket. |
+
+## /transactions
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| GET | /transactions | Ledger publik global; dompet ter-mask; pagination server-side. |
+
+## /webhooks
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| POST | /webhooks/xendit/payment | Callback pembayaran (header `X-Callback-Token`). |
+| POST | /webhooks/xendit/payout | Callback payout. |
+
+Webhook bersifat signal-only; pemenuhan (fulfillment) diproses server-side dan idempoten.
+
+## /cron
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| GET | /cron/scan-deposits | Pemindaian deposit Sell. |
+| GET | /cron/reconcile | Rekonsiliasi. |
+
+Cron memakai secret bearer dan ditujukan untuk penjadwal, bukan browser.
+
+## /visits
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| POST | /visits | Beacon analitik privacy-preserving (path + hari UTC saja). |
+
+## /admin
+
+Akses admin menggunakan access key + TOTP. Sebagian besar endpoint memerlukan sesi admin.
+
+| Method | Endpoint | Catatan |
+|---|---|---|
+| POST | /admin/login | Login access key + TOTP. |
+| POST | /admin/logout | Logout. |
+| GET | /admin/session | Sesi aktif. |
+| GET/PUT | /admin/fees | Daftar dan pembaruan biaya. |
+| PUT | /admin/fees/bulk | Pembaruan biaya massal. |
+| PUT | /admin/fees/[key] | Pembaruan satu biaya. |
+| GET/POST | /admin/prices | Manajemen harga. |
+| GET/POST | /admin/keys | Manajemen access key. |
+| GET | /admin/orders/topup | Daftar order Top Up. |
+| GET | /admin/orders/sell | Daftar order Sell. |
+| POST | /admin/orders/sell/[id]/confirm-crypto | Konfirmasi crypto. |
+| POST | /admin/orders/sell/[id]/confirm-payout | Konfirmasi payout. |
+| GET/PUT | /admin/rewards | Konfigurasi reward. |
+| PATCH | /admin/rewards/claims/[publicId] | Pembaruan klaim. |
+| POST | /admin/rewards/claims/[publicId]/payout | Proses payout. |
+| POST | /admin/rewards/claims/[publicId]/payout-test | Uji payout (DRY-RUN). |
+| POST | /admin/rewards/claims/[publicId]/reconcile | Rekonsiliasi reward. |
+| GET | /admin/security/events | Peristiwa keamanan. |
+| GET/POST/PATCH/DELETE | /admin/security/bans | Manajemen ban. |
+| GET/PUT | /admin/settings | Pengaturan sistem. |
+| PUT | /admin/settings/[key] | Pembaruan satu pengaturan. |
+| GET | /admin/stats | Statistik. |
+| GET | /admin/stats/timeseries | Deret waktu statistik. |
+| GET | /admin/support | Daftar tiket. |
+| GET/PATCH | /admin/support/[id] | Detail dan pembaruan tiket. |
+| GET/POST | /admin/support/[id]/messages | Percakapan tiket admin. |
+| GET | /admin/wallets/balance | Saldo dompet platform. |
+| GET | /admin/health/xendit | Kesehatan integrasi Xendit. |

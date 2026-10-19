@@ -1,0 +1,70 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "summary": "4 MEDIUM + 4 NIT findings. Design product-facts are highly accurate (verified against E:\\kiswap source and the npm registry), but 4 design-level issues need concrete fixes before implementation.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "MEDIUM",
+      "title": "Search-index path normalization unspecified for Windows",
+      "location": "§10 scripts/gen-search.mjs; §4 file tree",
+      "problem": "The design states the stored path field uses '/' as separator, but gen-search.mjs runs an fs walk on Windows (this environment) where path.relative results use '\\'. The normalization step is never specified, so a raw Windows relpath like 'memulai\\pengenalan' becomes '/docs/memulai\\pengenalan' and router.push on it 404s, breaking FR-2.5 search-result navigation. content.ts is unaffected (its slug comes from URL params).",
+      "fix": "In gen-search.mjs: const rel = path.relative(CONTENT_DIR, file); const slug = rel.replace(/\\\\/g, '/').replace(/\\.mdx$/, ''); entry.path = '/docs/' + slug; assert no entry.path contains '\\'."
+    },
+    {
+      "id": 2,
+      "severity": "MEDIUM",
+      "title": "/docs redirect will not fire under dynamicParams=false",
+      "location": "§5 pipeline steps 1-2",
+      "problem": "With an optional catch-all [[...slug]] and dynamicParams=false, only paths whose params match a generateStaticParams entry are served. The design emits only real pages (non-empty slug arrays), so the bare /docs (empty slug) is not among them and returns 404 under dynamicParams=false; the in-page redirect('/docs/memulai/pengenalan') never executes.",
+      "fix": "Either (a) include {slug:[]} in generateStaticParams and redirect in-page when !slug?.length, or (b) add a dedicated src/app/docs/page.tsx whose only line is redirect('/docs/memulai/pengenalan')."
+    },
+    {
+      "id": 3,
+      "severity": "MEDIUM",
+      "title": "Conflicting location for the mdxComponents map",
+      "location": "§4 file tree vs §5",
+      "problem": "§4 lists src/lib/typography.ts as 'ekspor mdxComponents map + plugin lists' AND lists src/components/mdx/mdxComponents.tsx as the 'map elemen → komponen' used by <MDXRemote components=...>. §5 then points the route to src/components/mdx/mdxComponents.tsx. Two files are both described as exporting the components map; the import source is ambiguous.",
+      "fix": "Make src/components/mdx/mdxComponents.tsx the sole owner of mdxComponents; src/lib/typography.ts exports only remarkPlugins/rehypePlugins arrays. Route imports mdxComponents from the former and plugins from the latter."
+    },
+    {
+      "id": 4,
+      "severity": "MEDIUM",
+      "title": "SearchDialog open-state cannot be shared via 'prop callback' across layouts",
+      "location": "§6 Sidebar; §7/§10 SearchDialog",
+      "problem": "TopNav is in the root layout and Sidebar is in the docs layout; they are neither siblings nor parent-child, so a plain prop callback cannot share SearchDialog isOpen state, and the design never says where <SearchDialog/> mounts. As described, at most one trigger could open the dialog, breaking FR-2.5/AC-11 search from the other.",
+      "fix": "Add a client SearchProvider context in src/app/layout.tsx owning isOpen and rendering <SearchDialog/> once; TopNav and Sidebar call useSearch().open(). Replace the 'prop callback' wording with this provider."
+    },
+    {
+      "id": 5,
+      "severity": "NIT",
+      "title": "Tailwind pinned to 3.4.19; requirement names 3.4.0",
+      "location": "§3; requirement Asumsi; §2 'identik dengan KORAMP' thesis",
+      "problem": "KORAMP uses tailwindcss 3.4.0 (verified in E:\\kiswap\\package.json); the requirement names 3.4.0 for consistency. The design pins 3.4.19 without acknowledging the deviation. AC-10 still satisfied; 3.4.19 is in the 3.4 line with no peer issue, so impact is low.",
+      "fix": "Pin tailwindcss to 3.4.0 to match KORAMP and the requirement, or add a one-line rationale for 3.4.19 next to §3."
+    },
+    {
+      "id": 6,
+      "severity": "NIT",
+      "title": "TOC/heading slug parity invariant overstated",
+      "location": "§6",
+      "problem": "The same github-slugger@2 version gives identical slugs only for identical input. content.ts slugs RAW markdown heading text (regex); rehype-slug slugs RENDERED text content (hast-util-to-string strips formatting and link targets). For headings containing links/images the slugs diverge, so a TOC anchor can point to a non-existent id. The design's unified-pipeline fallback is reactive, not preventive.",
+      "fix": "Add a §17 content rule 'H2/H3 headings must be plain text, no links/images' and state parity holds under it, or default to unified rehype-slug+collector extraction."
+    },
+    {
+      "id": 7,
+      "severity": "NIT",
+      "title": "Content-file count misstated (19 vs 18)",
+      "location": "§20 step 5",
+      "problem": "§4 file tree and §6 nav table define 18 pages (Memulai 3 + Integrasi 4 + Privasi 4 + Arsitektur 5 + API Reference 1 + Roadmap 1 = 18). §20 says '19 file'. No 19th page is referenced elsewhere.",
+      "fix": "Change '19 file' to '18 file'."
+    },
+    {
+      "id": 8,
+      "severity": "NIT",
+      "title": "Search scoring 'token-match' underspecified",
+      "location": "§10",
+      "problem": "For multi-token queries it is unspecified whether ALL tokens must match (AND) or ANY (OR), in which fields, and how multi-match rank combines.",
+      "fix": "Specify AND across tokens over title∪headings∪description∪excerpt; rank by weighted match count (title×4, headings×2, description×1, excerpt×1); ties by nav order; return top 8."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+---
+title: "Keamanan"
+description: "Redis rate limit, progressive IP ban, SecurityEvent, dan autentikasi admin."
+---
+
+## Rate Limiting
+
+Endpoint publik dibatasi lajunya menggunakan Redis. Batas per endpoint bervariasi, misalnya:
+
+- `/quotes`: 30 permintaan per menit.
+- `/orders`: 10 permintaan per menit.
+
+Permintaan yang melebihi batas ditolak dan tercatat.
+
+## Progressive IP Ban
+
+IpBan menyimpan pemblokiran sementara yang bersifat progresif:
+
+| Kolom | Fungsi |
+|---|---|
+| level | Tingkat eskalasi. |
+| violationCount | Jumlah siklus ban yang dijatuhkan. |
+| durationMs | Durasi ban. |
+| expiresAt | Waktu berakhir ban. |
+| permanent | Hanya diatur manual oleh admin. |
+| needsReview | Ditandai bila siklus melewati batas otomatis. |
+
+## SecurityEvent
+
+SecurityEvent diagregasi per jam (hour bucket) dan unik per kombinasi bucket, IP, dan jenis event. Peristiwa berulang meningkatkan penghitung, bukan membuat baris tanpa batas.
+
+## Autentikasi Admin
+
+Admin menggunakan kredensial tunggal multi-faktor dengan sesi satu perangkat. Detail mekanisme autentikasi tidak dipublikasikan demi keamanan.
+
+## Prinsip Umum
+
+- Tidak ada email, kata sandi, atau hierarki peran untuk admin.
+- Peristiwa keamanan dicatat untuk deteksi dan investigasi.
+- Pemblokiran permanen hanya dilakukan manual.

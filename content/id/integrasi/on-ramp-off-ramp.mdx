@@ -1,0 +1,200 @@
+---
+title: "On-Ramp & Off-Ramp"
+description: "Panduan unggulan KORAMP: mengonversi Rupiah ke crypto (Top Up) dan sebaliknya (Sell) dengan model wallet-first."
+---
+
+## Pengenalan
+
+Panduan ini untuk developer dan product team yang ingin memahami serta mengintegrasikan ramp Rupiah (IDR) dengan crypto di KORAMP. KORAMP menyediakan dua arah:
+
+- **On-Ramp (Top Up)**: pengguna membayar Rupiah, menerima crypto ke dompetnya.
+- **Off-Ramp (Sell)**: pengguna mengirim crypto, menerima Rupiah ke rekening banknya.
+
+KORAMP bersifat **wallet-first**: tidak ada akun, dan alamat dompet adalah identitas.
+
+<Callout type="warning" title="Model privasi KORAMP">
+KORAMP menggunakan transfer on-chain yang **publik**. Pengirim, penerima, dan jumlah **terlihat di blockchain**. KORAMP tidak menawarkan saldo terenkripsi atau keseimbangan privat. Privasi berasal dari model tanpa akun, dompet sebagai identitas, dan penyajian ter-mask di ledger publik.
+</Callout>
+
+## Visibilitas Bidang
+
+Dua tabel berikut menunjukkan tingkat visibilitas tiap bidang pada masing-masing arah.
+
+<div className="not-prose grid gap-6 md:grid-cols-2">
+  <div className="rounded-lg border border-line bg-surface-1 p-4">
+    <div className="mb-3 text-sm font-semibold text-gold">On-Ramp (Top Up)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Bidang</th>
+          <th>Visibilitas</th>
+          <th>Alasan</th>
+        </tr>
+      </thead>
+      <tbody>
+<tr>
+           <td>Pembayaran IDR</td>
+           <td>Terlihat via Xendit</td>
+           <td>Xendit memproses pembayaran fiat dan mengirim webhook.</td>
+         </tr>
+        <tr>
+          <td>Aset</td>
+          <td>Terlihat di on-chain</td>
+          <td>Crypto yang dikirim tercatat di blockchain.</td>
+        </tr>
+        <tr>
+          <td>Jumlah</td>
+          <td>Terlihat di on-chain</td>
+          <td>Transfer on-chain bersifat publik.</td>
+        </tr>
+        <tr>
+          <td>Pengirim</td>
+          <td>Terlihat di on-chain</td>
+          <td>Alamat hot wallet platform tercatat publik.</td>
+        </tr>
+        <tr>
+          <td>Penerima</td>
+          <td>Terlihat di on-chain</td>
+          <td>Alamat dompet pengguna tercatat publik.</td>
+        </tr>
+        <tr>
+          <td>Memo (opsional)</td>
+          <td>Opsional, terlihat on-chain bila diisi</td>
+          <td>Hanya ditambahkan bila diperlukan.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div className="rounded-lg border border-line bg-surface-1 p-4">
+    <div className="mb-3 text-sm font-semibold text-gold">Off-Ramp (Sell)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Bidang</th>
+          <th>Visibilitas</th>
+          <th>Alasan</th>
+        </tr>
+      </thead>
+      <tbody>
+<tr>
+           <td>Pembayaran IDR</td>
+           <td>Tidak berlaku</td>
+           <td>Off-Ramp memakai Xendit Payout v3 untuk payout fiat.</td>
+         </tr>
+        <tr>
+          <td>Aset</td>
+          <td>Terlihat di on-chain</td>
+          <td>Crypto yang dikirim pengguna tercatat di blockchain.</td>
+        </tr>
+        <tr>
+          <td>Jumlah</td>
+          <td>Terlihat di on-chain</td>
+          <td>Transfer on-chain bersifat publik.</td>
+        </tr>
+        <tr>
+          <td>Pengirim</td>
+          <td>Terlihat di on-chain</td>
+          <td>Alamat dompet pengguna tercatat publik.</td>
+        </tr>
+        <tr>
+          <td>Penerima</td>
+          <td>Terlihat di on-chain</td>
+          <td>Alamat deposit platform tercatat publik.</td>
+        </tr>
+        <tr>
+          <td>Memo (opsional)</td>
+          <td>Opsional, terlihat on-chain bila diisi</td>
+          <td>Hanya ditambahkan bila diperlukan.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+## Anda memerlukan
+
+Sebelum mengintegrasikan, pastikan Anda memiliki:
+
+1. Dompet EVM atau Solana milik pengguna, sesuai aset yang dipilih.
+2. Aset yang didukung pada jaringan yang didukung (SOL, ETH, atau BNB di testnet).
+3. Jumlah Rupiah dalam batas minimum dan maksimum yang berlaku untuk aset tersebut.
+4. Kemampuan menandatangani pesan untuk membuktikan kepemilikan dompet (EVM dan Solana).
+5. Endpoint callback atau webhook untuk menerima notifikasi status dari penyedia pembayaran.
+
+## Aset dan Inventaris
+
+1. **SOL di Solana Devnet** — ramp Top Up dan Sell aktif. Perhitungkan biaya pembuatan Associated Token Account (ATA) pada wallet penerima yang belum memiliki ATA.
+2. **ETH di Base Sepolia (chain 84532)** — ramp aktif. Dompet EVM harus menambahkan jaringan Base Sepolia bila belum dikenal.
+3. **BNB di BSC Testnet (chain 97)** — ramp aktif. Dompet EVM harus menambahkan jaringan BSC Testnet bila belum dikenal.
+
+<Callout type="info" title="Testnet">
+Ramp saat ini berjalan di jaringan testnet. Lihat halaman [Aset & Jaringan](/docs/id/integrasi/aset-jaringan) untuk detail chain ID dan explorer.
+</Callout>
+
+## Pertimbangan Kepatuhan
+
+### Informasi yang Dapat Anda Lihat
+
+| Informasi | On-chain | Off-chain |
+|---|---|---|
+| Alamat pengirim | Ya, publik | Ya, publik |
+| Alamat penerima | Ya, publik | Ya, publik |
+| Jumlah | Ya, publik | Ya, publik |
+| Detail bank payout | Tidak | Hanya 4 digit terakhir yang ditampilkan |
+| Alamat dompet di ledger publik | Disamarkan | Disamarkan |
+
+### Penyaringan Dompet
+
+KORAMP menerapkan penyaringan dompet sebagai bagian dari operasional keamanan. Posisi saat ini: penyaringan fokus pada deteksi penyalahgunaan dan pembatasan laju (rate limiting), bukan pada layanan analitik pihak ketiga. KORAMP tidak mengklaim cakupan penyaringan yang setara dengan penyedia khusus kepatuhan.
+
+### Travel Rule
+
+KORAMP memakai model wallet-first tanpa KYC. Konsekuensinya, mekanisme Travel Rule klasik (pengumpulan dan pertukaran data pengirim/penerima antar lembaga) **tidak tersedia**. Hal ini diadaptasi dengan menjaga jejak audit internal: tanpa akun, dompet sebagai identitas, dan ledger publik yang disajikan secara ter-mask.
+
+## Petakan Alur yang Sudah Ada
+
+| Langkah eksisting | Langkah KORAMP |
+|---|---|
+| Kirim fiat | Bayar via Xendit QRIS (transfer bank/kartu) |
+| Terima crypto | Crypto dikirim ke dompet tujuan |
+| Jual crypto | Kirim ke alamat deposit platform |
+| Tarik Rupiah | Payout fiat ke bank via Xendit Payout v3 |
+
+## Catatan dan Audit
+
+Setiap transaksi penting tercatat di ledger double-entry dan audit log:
+
+| Komponen | Fungsi |
+|---|---|
+| AuditLog | Mencatat aksi penting beserta aktor dan metadata. |
+| LedgerEntry | Pencatatan double-entry (CREDIT/DEBIT) per dompet dan aset. |
+| XenditWebhook | Idempotensi webhook Xendit berdasarkan kind, event, orderId, dan payoutId. |
+
+## Alur Transaksi
+
+### 1. On-Ramp
+
+1. Pengguna meminta quote tipe TOP_UP.
+2. Buat order Top Up dan dapatkan URL pembayaran dari Xendit QRIS.
+3. Pengguna membayar via Xendit (transfer bank atau kartu).
+4. Webhook Xendit memberi tahu pembayaran berhasil.
+5. Platform mengirim crypto ke dompet tujuan.
+6. Order ditandai selesai saat `completedAt` terisi.
+
+### 2. Off-Ramp
+
+1. Pengguna meminta quote tipe SELL.
+2. Buat order Sell dan dapatkan alamat deposit platform.
+3. Pengguna mengirim crypto ke alamat deposit.
+4. Scheduler memindai deposit dan melacak konfirmasi.
+5. Setelah konfirmasi cukup, payout fiat dikirim via Xendit Payout v3.
+6. Order ditandai selesai saat payout berhasil.
+
+## Mulai Integrasi
+
+Dengan memahami visibilitas on-chain dan alur di atas, Anda dapat mulai membangun integrasi ramp KORAMP.
+
+<Callout type="info" title="Mulai Integrasi">
+Lanjutkan ke [Alur Transaksi](/docs/id/integrasi/alur-transaksi) untuk detail teknis tiap langkah, atau buka [API Reference](/docs/id/api-reference) untuk daftar endpoint.
+</Callout>

@@ -1,0 +1,68 @@
+---
+title: "Kebijakan Privasi"
+description: "Ringkasan 15 bagian kebijakan privasi KORAMP: data, dompet, ledger, dan keamanan."
+---
+
+## Ruang Lingkup
+
+Kebijakan ini menjelaskan bagaimana KORAMP menangani informasi dalam model wallet-first tanpa akun. Ringkasan ini dibagi menjadi 15 bagian.
+
+### 1. Identitas dan prinsip
+
+KORAMP adalah layanan on/off-ramp crypto berbasis dompet. Prinsip utamanya: tanpa akun pelanggan, dompet sebagai identitas, dan tidak ada kustodi atas dana pengguna.
+
+### 2. Data yang kami kumpulkan
+
+Kami mengumpulkan data minimum yang diperlukan untuk memproses transaksi: alamat dompet, jaringan, aset, jumlah, dan status transaksi.
+
+### 3. Alamat dompet sebagai identitas
+
+Alamat dompet berfungsi sebagai identitas. Tidak ada nama, email, atau kata sandi pelanggan yang disimpan untuk alur ritel.
+
+### 4. Data yang tidak kami simpan
+
+KORAMP tidak menyimpan private key atau seed phrase. Kami juga tidak menyimpan profil bank pelanggan; detail bank disimpan per-transaksi.
+
+### 5. Ledger publik dan penyajian ter-mask
+
+Ledger transaksi bersifat publik. Alamat dompet disamarkan (misalnya `0x1234...abcd`), dan hanya 4 digit terakhir nomor rekening yang ditampilkan.
+
+### 6. Data pembayaran pihak ketiga
+
+Pembayaran fiat dan payout bank diproses oleh Xendit. Data pembayaran tersebut tunduk pada kebijakan privasi Xendit.
+
+### 7. Analitik halaman yang menjaga privasi
+
+Analitik halaman hanya mencatat path dan hari UTC. Tidak ada alamat IP, user-agent, atau sidik jari perangkat.
+
+### 8. Keamanan akun admin
+
+Akses admin menggunakan kredensial tunggal multi-faktor dengan sesi satu perangkat.
+
+### 9. Penyimpanan dan retensi
+
+Data disimpan di PostgreSQL (Neon) dan diproses dengan Redis untuk pembatasan laju. Retensi mengikuti kebutuhan operasional dan regulasi.
+
+### 10. Berbagi data
+
+Kami membagikan data hanya kepada penyedia yang diperlukan untuk memproses transaksi (misalnya Xendit) dan bila diwajibkan hukum.
+
+### 11. Hak pengguna
+
+Pengguna dapat meminta informasi tentang data yang berkaitan dengan alamat dompet mereka dan meminta penghapusan sesuai ketentuan yang berlaku.
+
+### 12. Keamanan teknis
+
+Kami menerapkan pembatasan laju berbasis Redis, pemblokiran IP progresif, pencatatan peristiwa keamanan, dan idempotensi webhook.
+
+### 13. Perubahan kebijakan
+
+Kebijakan ini dapat diperbarui. Perubahan signifikan akan diumumkan melalui kanal resmi.
+
+### 14. Hukum yang berlaku
+
+Kebijakan ini tunduk pada hukum yang berlaku di yurisdiksi tempat KORAMP beroperasi.
+
+### 15. Kontak
+
+Untuk pertanyaan privasi, hubungi tim KORAMP melalui kanal dukungan resmi.

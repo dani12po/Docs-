@@ -1,0 +1,36 @@
+---
+title: "Compliance"
+description: "KORAMP's KYC-less wallet-first compliance model: what's visible on-chain vs off-chain, and the audit trail."
+---
+
+## KYC-less Wallet-First Model
+
+KORAMP operates without customer accounts and without KYC. A wallet address is the customer identity. This changes the shape of compliance compared to a hosted-account exchange.
+
+## What Is Visible
+
+| Data | Public on-chain | Visible to KORAMP |
+|---|---|---|
+| User wallet address | Yes | Yes |
+| Platform wallet address | Yes | Yes |
+| Asset and amount of transfers between KORAMP and the user | Yes | Yes |
+| Sender and recipient of the user's other private transfers | Yes | Yes |
+| Asset and amount of the user's other transfers | Yes | Only if the user shares a view key (not applicable — public chain) |
+| User's private balances | Yes (public chain) | Yes (public chain) |
+
+Because KORAMP uses **public** on-chain transfers (not encrypted balances), sender, receiver, and amount are visible to anyone reading the blockchain. KORAMP does not offer private/encrypted transfers.
+
+## Audit Trail
+
+Every significant event is recorded:
+- **AuditLog** — important actions with actor and metadata.
+- **LedgerEntry** — double-entry records (CREDIT/DEBIT) per wallet and asset.
+- **XenditWebhook** — idempotent webhook records keyed on kind, event, and IDs.
+
+## Limits and Abuse Prevention
+
+- Progressive IP bans for abuse patterns.
+- Redis-backed rate limiting.
+- Security events aggregated per hour bucket (deduplicated, bounded).
+
+See [Architecture → Security](/docs/en/arsitektur/keamanan) for details.

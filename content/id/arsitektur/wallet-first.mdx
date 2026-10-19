@@ -1,0 +1,29 @@
+---
+title: "Wallet-First"
+description: "Mengapa KORAMP tidak punya tabel pengguna, dan bagaimana alamat dompet menjadi identitas."
+---
+
+## Tanpa Tabel Pengguna
+
+KORAMP tidak memiliki tabel `users` untuk pelanggan. Alamat dompet adalah identitas. Setiap order terikat pada kombinasi `walletAddress` dan jaringan.
+
+## Konsekuensi Desain
+
+- Tidak ada alur registrasi, login pelanggan, atau kata sandi.
+- Pengguna tetap memegang private key mereka.
+- Tidak ada kustodi atas dana pengguna.
+- Riwayat order dapat dilacak melalui alamat dompet.
+
+## Bukti Kepemilikan
+
+Untuk membuktikan kepemilikan dompet, KORAMP menerapkan mekanisme challenge:
+
+1. **Challenge**: pengguna meminta nonce dan pesan untuk ditandatangani.
+2. **Verify**: pengguna mengirimkan tanda tangan, yang diverifikasi server.
+3. **Single-use**: challenge hanya berlaku sekali dan memiliki waktu kedaluwarsa.
+
+Challenge digunakan untuk klaim reward dan dukungan, bukan untuk login akun.
+
+## Identitas di Ledger Publik
+
+Di ledger publik, alamat dompet disamarkan menjadi bentuk seperti `0x1234...abcd`. Tidak ada tautan langsung dari alamat asli ke identitas pribadi di penyajian publik.

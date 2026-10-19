@@ -1,0 +1,45 @@
+---
+title: "Catatan & Audit"
+description: "AuditLog, LedgerEntry double-entry, dan idempotensi webhook XenditWebhook."
+---
+
+## AuditLog
+
+AuditLog mencatat aksi penting di sistem:
+
+| Kolom | Fungsi |
+|---|---|
+| action | Jenis aksi. |
+| entity / entityId | Entitas yang terlibat. |
+| actor | Aktor: alamat dompet, admin, atau system. |
+| metadata | Informasi tambahan. |
+| ipAddress | Alamat IP (bila relevan). |
+| createdAt | Waktu kejadian. |
+
+## LedgerEntry Double-Entry
+
+LedgerEntry mencatat pergerakan dana dengan model double-entry:
+
+- `direction`: CREDIT atau DEBIT.
+- `asset`: IDR, SOL, ETH, atau BNB.
+- `amount`: jumlah.
+- `reference`: referensi transaksi.
+- Terhubung ke TopUpOrder atau SellOrder.
+
+Setiap pergerakan memiliki sisi kredit dan debit yang seimbang, sehingga tidak ada dana yang tercatat tak berpasangan.
+
+## Idempotensi Webhook
+
+Webhook Xendit disimpan di XenditWebhook dengan keunikan gabungan pada `kind`, `event`, `orderId`, dan `payoutId`. Ini memastikan event yang sama tidak diproses dua kali.
+
+| Kolom | Fungsi |
+|---|---|
+| kind | PAYMENT atau PAYOUT. |
+| event | Jenis event, misalnya payment.success. |
+| orderId | ID order Xendit. |
+| payoutId | ID payout Xendit. |
+| payload | JSON mentah untuk audit. |
+
+## Manfaat
+
+Jejak audit ini mendukung rekonsiliasi, investigasi insiden, dan pertanggungjawaban operasional tanpa menyimpan data identitas pelanggan.

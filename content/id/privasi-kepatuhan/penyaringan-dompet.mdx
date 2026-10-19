@@ -1,0 +1,31 @@
+---
+title: "Penyaringan Dompet"
+description: "Posisi KORAMP saat ini terhadap penyaringan alamat dompet, secara jujur."
+---
+
+## Posisi Saat Ini
+
+KORAMP menerapkan pembatasan laju (rate limiting) dan pemblokiran IP progresif untuk menangani penyalahgunaan. Untuk penyaringan alamat dompet, posisi kami adalah:
+
+- KORAMP **tidak** menggunakan layanan analitik blockchain pihak ketiga secara default.
+- KORAMP mencatat peristiwa keamanan (security event) untuk deteksi anomali.
+- Tidak ada daftar hitam alamat on-chain yang diterapkan secara menyeluruh saat ini.
+
+## Apa yang Dilakukan
+
+- Rate limiting berbasis Redis pada endpoint publik.
+- Pemblokiran IP sementara yang bersifat progresif.
+- Pencatatan peristiwa keamanan yang diagregasi per jam.
+- Validasi kombinasi alamat, jaringan, dan aset pada alur transaksi.
+
+## Apa yang Belum Dilakukan
+
+- Penyaringan berbasis cluster atau label dari penyedia chain analytics.
+- Skor risiko alamat otomatis.
+- Penerapan Travel Rule.
+
+## Arah ke Depan
+
+Tooling kepatuhan, AML, dan Travel Rule masuk dalam roadmap Fase 4. Sampai itu tersedia, KORAMP mengandalkan kontrol operasional dan audit trail internal.
+
+Lihat [Roadmap](/docs/id/roadmap) untuk detail Fase 4.

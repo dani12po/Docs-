@@ -1,0 +1,305 @@
+---
+title: "Membuat Transaksi"
+description: "Panduan lengkap membuat transaksi di KORAMP: quote, order Top Up dan Sell, pembayaran via Xendit, pengiriman crypto, dan contoh kode untuk pengujian di testnet."
+---
+
+## Gambaran Umum
+
+Setiap transaksi di KORAMP dibuat melalui empat tahap yang sama:
+
+1. **Quote** — harga terkunci dibuat untuk jumlah Rupiah atau crypto.
+2. **Order** — order dibuat dengan konsumsi quote secara atomik (sekali pakai).
+3. **Pembayaran / deposit** — pengguna membayar (Top Up via Xendit) atau mengirim crypto (Sell).
+4. **Penyelesaian** — platform mengirim crypto (Top Up) atau payout Rupiah ke bank (Sell).
+
+Semua contoh di bawah memakai jaringan testnet dan base URL `https://your-koramp-instance/api`.
+
+<AnimatedFlowchart
+  flows={[
+    {
+      title: 'Alur Umum Transaksi',
+      direction: 'Berlaku untuk Top Up dan Sell',
+      steps: [
+        { icon: 'FileText', label: 'Quote', desc: 'Harga terkunci, sekali pakai' },
+        { icon: 'ArrowRightLeft', label: 'Order', desc: 'TopUpOrder atau SellOrder dibuat' },
+        { icon: 'CreditCard', label: 'Bayar / Kirim', desc: 'Fiat via Xendit atau crypto ke deposit' },
+        { icon: 'ShieldCheck', label: 'Selesai', desc: 'Crypto terkirim atau payout bank' },
+      ],
+    },
+  ]}
+/>
+
+## Prasyarat Pengujian
+
+1. Dompet EVM (MetaMask) atau Solana (Phantom) yang sudah diuji format alamatnya.
+2. Jaringan testnet yang ditambahkan ke dompet:
+
+| Jaringan | Chain ID | Testnet |
+|---|---|---|
+| Solana | — | Devnet |
+| Base | 84532 | Sepolia |
+| BSC | 97 | Testnet |
+
+3. Faucet testnet untuk gas (BASE Sepolia, BSC Testnet) dan SOL Devnet.
+4. Quote yang masih berlaku (kedaluwarsa otomatis).
+
+## Langkah 1 — Buat Quote
+
+Quote memberikan harga terkunci dan ID yang dipakai saat membuat order.
+
+**Top Up** (pengguna membayar Rupiah):
+
+```bash
+curl -X POST https://your-koramp-instance/api/quotes/topup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "asset": "ETH",
+    "network": "BASE",
+    "idrAmount": "500000"
+  }'
+```
+
+**Sell** (pengguna menjual crypto):
+
+```bash
+curl -X POST https://your-koramp-instance/api/quotes/sell \
+  -H "Content-Type: application/json" \
+  -d '{
+    "asset": "ETH",
+    "network": "BASE",
+    "idrAmount": "500000"
+  }'
+```
+
+Contoh respons (200):
+
+```json
+{
+  "quoteId": "3f8a1c2e-9b4d-4e5f-8a6b-7c8d9e0f1a2b",
+  "type": "TOP_UP",
+  "asset": "ETH",
+  "network": "BASE",
+  "marketPrice": "26500000.00",
+  "exchangeRate": "26632500.00",
+  "idrAmount": "500000.00",
+  "cryptoAmount": "0.01877326",
+  "serviceFee": "5000.00",
+  "networkFee": "2500.00",
+  "tax": "5500.00",
+  "totalIdr": "500000.00",
+  "expiresAt": "2026-10-18T10:30:00.000Z"
+}
+```
+
+<Callout type="info" title="Quote sekali pakai">
+Begitu dipakai untuk membuat order, quote ditandai terpakai dan tidak dapat dipakai ulang. Simpan `quoteId` — wajib saat membuat order.
+</Callout>
+
+## Langkah 2 — Buat Order Top Up
+
+Order Top Up dibuat beserta payment request Xendit secara server-side.
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/topup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "walletAddress": "0x1234...abcd",
+    "walletType": "EVM",
+    "quoteId": "3f8a1c2e-9b4d-4e5f-8a6b-7c8d9e0f1a2b",
+    "asset": "ETH",
+    "network": "BASE"
+  }'
+```
+
+Contoh respons (201):
+
+```json
+{
+  "order": {
+    "publicId": "krm-8x4k2m9p",
+    "status": "PAYMENT_PENDING",
+    "walletAddress": "0x1234...abcd",
+    "assetSymbol": "ETH",
+    "network": "BASE",
+    "cryptoAmount": "0.01877326",
+    "totalIdr": 500000,
+    "expiresAt": "2026-10-18T10:30:00.000Z"
+  },
+  "payment": {
+    "status": "PENDING",
+    "payUrl": "https://checkout.xendit.co.id/...",
+    "requestedAmount": 500000
+  },
+  "providerOrderId": "ap-order-000123"
+}
+```
+
+<Callout type="warning" title="Batas nominal">
+Batas minimum dan maksimum order ditentukan per aset dan dibaca dari konfigurasi biaya. Nominal di luar batas ditolak saat pembuatan order.
+</Callout>
+
+## Langkah 3 — Bayar via Xendit
+
+1. Buka `payUrl` dari respons order di browser atau sematkan di aplikasi.
+2. Selesaikan pembayaran dengan metode yang tersedia di Xendit (transfer bank atau kartu).
+3. Xendit mengirim webhook ke server KORAMP saat pembayaran berhasil.
+4. Server memverifikasi amount secara independen lalu memicu pengiriman crypto ke dompet tujuan.
+
+Pengiriman crypto dilakukan otomatis oleh platform. Anda tinggal memantau statusnya.
+
+## Langkah 4 — Pantau Pengiriman (Top Up)
+
+**Cek status order**:
+
+```bash
+curl https://your-koramp-instance/api/orders/krm-8x4k2m9p
+```
+
+**Re-check pengiriman on-chain** (berguna bila status stuck di `CRYPTO_PROCESSING`):
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/krm-8x4k2m9p/check-delivery
+```
+
+Contoh respons saat sudah terkonfirmasi:
+
+```json
+{
+  "status": "COMPLETED",
+  "txHash": "0xabc123...def456",
+  "confirmations": 12
+}
+```
+
+## Alur Sell — Ringkasan Lengkap
+
+1. **Buat quote** SELL (Langkah 1).
+2. **Buat order Sell**:
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/sell \
+  -H "Content-Type: application/json" \
+  -d '{
+    "walletAddress": "0x1234...abcd",
+    "walletType": "EVM",
+    "quoteId": "3f8a1c2e-9b4d-4e5f-8a6b-7c8d9e0f1a2b",
+    "asset": "ETH",
+    "network": "BASE",
+    "bankName": "BCA",
+    "accountNumber": "1234567890",
+    "accountName": "Budi Santoso"
+  }'
+```
+
+Respons berisi `depositAddress` — alamat tempat pengguna mengirim crypto.
+
+```json
+{
+  "order": {
+    "publicId": "kms-3n7q1w5e",
+    "status": "AWAITING_CRYPTO",
+    "depositAddress": "0x9876...wxyz",
+    "cryptoAmount": "0.01877326",
+    "requiredConfirmations": 12,
+    "expiresAt": "2026-10-18T11:00:00.000Z"
+  }
+}
+```
+
+3. **Kirim crypto** dari dompet pengguna ke `depositAddress` dengan jumlah yang **persis** sama dengan `cryptoAmount`.
+4. **Submit hash transaksi** (wajib untuk jaringan EVM agar pelacakan cepat):
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/kms-3n7q1w5e/submit-tx \
+  -H "Content-Type: application/json" \
+  -d '{ "txHash": "0xabc123...def456" }'
+```
+
+Backend memverifikasi hash secara independen: pengirim, penerima, jumlah, dan status receipt. Hash yang tidak valid ditolak dan dicatat di log audit.
+
+5. **Payout otomatis** — setelah konfirmasi on-chain mencapai `requiredConfirmations`, Rupiah ditransfer ke rekening bank via Xendit Payout v3.
+
+## Contoh Kode TypeScript (Client)
+
+Contoh helper untuk menguji alur lengkap dari aplikasi atau skrip:
+
+```typescript
+const BASE_URL = "https://your-koramp-instance/api";
+
+async function createTopUpOrder(walletAddress: string) {
+  const quote = await fetch(`${BASE_URL}/quotes/topup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset: "ETH", network: "BASE", idrAmount: "500000" }),
+  }).then((r) => r.json());
+
+  const res = await fetch(`${BASE_URL}/orders/topup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      walletAddress,
+      walletType: "EVM",
+      quoteId: quote.quoteId,
+      asset: "ETH",
+      network: "BASE",
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Order gagal: ${res.status}`);
+  return res.json(); // { order, payment, providerOrderId }
+}
+
+async function pollUntilDone(publicId: string, tries = 20) {
+  for (let i = 0; i < tries; i++) {
+    const order = await fetch(`${BASE_URL}/orders/${publicId}`).then((r) => r.json());
+    if (order.status === "COMPLETED") return order;
+    if (order.status === "FAILED") throw new Error(order.failureReason ?? "Order gagal");
+    await new Promise((r) => setTimeout(r, 10_000));
+  }
+  throw new Error("Timeout menunggu penyelesaian");
+}
+
+async function testDelivery(publicId: string) {
+  const res = await fetch(`${BASE_URL}/orders/${publicId}/check-delivery`, { method: "POST" });
+  return res.json(); // { status, txHash?, confirmations? }
+}
+```
+
+## Checklist Pengujian di Testnet
+
+Gunakan checklist ini untuk menguji alur end-to-end sebelum produksi:
+
+| # | Skenario | Yang diverifikasi |
+|---|---|---|
+| 1 | Buat quote lalu order Top Up | Quote terkonsumsi atomik; tidak bisa dipakai dua kali. |
+| 2 | Bayar `payUrl` via Xendit | Webhook diterima; amount diverifikasi; crypto terkirim. |
+| 3 | Order stuck di `CRYPTO_PROCESSING` | `check-delivery` me-resume tanpa double-broadcast. |
+| 4 | Buat order Sell | Alamat deposit unik per order; detail bank tersimpan. |
+| 5 | Kirim crypto lalu `submit-tx` | Hash diverifikasi on-chain (from/to/amount/receipt). |
+| 6 | Kirim hash tx dari wallet lain | Ditolak: `from` harus cocok dengan wallet order. |
+| 7 | Ulangi `submit-tx` dengan hash yang sama | Idempoten — tidak ada double-processing. |
+| 8 | Penuhkan konfirmasi | Payout terpicu otomatis via Xendit Payout v3. |
+| 9 | Biarkan order kedaluwarsa | Order berakhir dengan `failureReason`; tidak menggantung. |
+
+<Callout type="warning" title="Jangan uji di mainnet">
+Seluruh pengujian wajib dilakukan di testnet (Solana Devnet, Base Sepolia, BSC Testnet). Amount transfer on-chain bersifat publik dan tidak dapat dibatalkan.
+</Callout>
+
+## Status Order yang Perlu Dikenal
+
+| Status | Arti |
+|---|---|
+| `PAYMENT_PENDING` | Menunggu pembayaran Xendit (Top Up). |
+| `CRYPTO_PROCESSING` | Pembayaran diterima; crypto sedang dikirim/dikonfirmasi. |
+| `AWAITING_CRYPTO` | Menunggu deposit crypto dari pengguna (Sell). |
+| `CRYPTO_DETECTED` | Deposit terlihat on-chain, belum cukup konfirmasi. |
+| `CONFIRMING` | Konfirmasi berjalan menuju `requiredConfirmations`. |
+| `CRYPTO_CONFIRMED` | Konfirmasi cukup; payout sedang diproses. |
+| `COMPLETED` | Transaksi selesai. |
+| `FAILED` / `PAYMENT_CREATE_FAILED` | Gagal; lihat `failureReason` untuk detail. |
+
+## Langkah Berikutnya
+
+- Lihat [Quote & Pricing](/docs/id/integrasi/quote-pricing) untuk komponen harga.
+- Lihat [Alur Transaksi](/docs/id/integrasi/alur-transaksi) untuk detail teknis tiap tahap.
+- Lihat [On-Ramp & Off-Ramp](/docs/id/integrasi/on-ramp-off-ramp) untuk visibilitas dan kepatuhan.

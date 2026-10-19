@@ -1,0 +1,40 @@
+---
+title: "Security"
+description: "Redis rate limiting, progressive IP bans, SecurityEvent aggregation, and admin authentication."
+---
+
+## Rate Limiting
+
+Public endpoints are rate-limited using Redis. Limits vary per endpoint, for example:
+
+- `/quotes`: 30 requests per minute.
+- `/orders`: 10 requests per minute.
+
+Requests exceeding the limit are rejected and logged.
+
+## Progressive IP Bans
+
+`IpBan` stores progressive temporary bans:
+
+| Column | Function |
+|---|---|
+| level | Escalation level. |
+| violationCount | Number of imposed ban cycles. |
+| durationMs | Ban duration. |
+| expiresAt | Ban expiry time. |
+| permanent | Only set manually by an admin. |
+| needsReview | Set when cycles exceed the automatic cap. |
+
+## SecurityEvent
+
+`SecurityEvent` is aggregated per hour bucket and unique per combination of bucket, IP, and event type. Repeated events increment a counter rather than creating unbounded rows.
+
+## Admin Authentication
+
+Admins use a single multi-factor credential with a single-device session. The exact authentication mechanism isn't published for security.
+
+## General Principles
+
+- No email, password, or role hierarchy for admins.
+- Security events are recorded for detection and investigation.
+- Permanent bans are only ever applied manually.

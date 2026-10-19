@@ -1,0 +1,141 @@
+---
+title: "API Reference"
+description: "Overview of KORAMP endpoint groups: quotes, orders, payments, prices, assets, wallets, rewards, support, transactions, webhooks, cron, visits, and admin."
+---
+
+## Overview
+
+This page is a summary of KORAMP's public endpoint groups. Signatures (method and path) follow the real handlers in the app. Non-public endpoints are noted honestly.
+
+## /quotes
+
+Create locked-price quotes for Top Up or Sell.
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | /quotes/topup | Body `{asset, network, idrAmount}`. Rate limit 30/min. |
+| POST | /quotes/sell | Body `{asset, network, idrAmount}`. Rate limit 30/min. |
+
+## /orders
+
+Create and monitor orders.
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | /orders/topup | Creates a TopUpOrder + Xendit QRIS payment request. |
+| POST | /orders/sell | Creates a SellOrder + deposit address + bank payout details. |
+| GET | /orders/[publicId] | Order detail by public ID. |
+| GET/POST | /orders/[publicId]/payment-status | Payment status. |
+| GET | /orders/[publicId]/payout-status | Payout status. |
+| POST | /orders/[publicId]/check-delivery | Check crypto delivery. |
+| POST | /orders/[publicId]/confirmed-sent | Confirm send. |
+| POST | /orders/[publicId]/poll-deposit | Deposit monitoring. |
+| POST | /orders/[publicId]/submit-tx | Submit transaction hash. |
+
+## /payments
+
+<Callout type="warning" title="No public endpoint">
+There's no separate public `/payments` endpoint. The Payment object (Xendit QRIS) is created server-side inside `POST /orders/topup`; its status is accessed via `/orders/[publicId]/payment-status`.
+</Callout>
+
+## /prices
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | /prices | Public indicative rate board (SOL/ETH/BNB live + spot + limit IDR). Read-only. |
+
+## /assets
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | /assets | List of active assets and networks. 60s cache. |
+
+## /wallets
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | /wallets/validate | Validate address/network/asset combination. |
+| POST | /wallets/challenge | Proof-of-ownership nonce. |
+| POST | /wallets/verify | Verify signature. |
+| POST | /wallets/signature | Signing. |
+| GET | /wallets/[address]/orders | Wallet order history (wallet-first). |
+
+## /rewards
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | /rewards | Reward progress and eligibility by wallet. |
+| POST | /rewards/claim | Claim reservation (Phase 2: PENDING_PAYOUT, DRY-RUN). |
+
+## /support
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET/POST | /support | List and submit tickets (order reference required). |
+| GET | /support/[publicId] | Ticket detail. |
+| GET/POST | /support/[publicId]/messages | Ticket conversation. |
+
+## /transactions
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | /transactions | Global public ledger; masked wallets; server-side pagination. |
+
+## /webhooks
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | /webhooks/xendit/payment | Xendit payment callback (`X-Callback-Token` = `XENDIT_WEBHOOK_TOKEN`). |
+| POST | /webhooks/xendit/payout | Xendit payout callback. |
+
+Webhooks are signal-only; fulfillment is processed server-side and idempotently.
+
+## /cron
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| GET | /cron/scan-deposits | Scan Sell deposits. |
+| GET | /cron/reconcile | Reconciliation. |
+
+Cron uses a bearer secret and is meant for a scheduler, not a browser.
+
+## /visits
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | /visits | Privacy-preserving analytics beacon (path + UTC day only). |
+
+## /admin
+
+Admin access uses an access key + TOTP. Most endpoints require an admin session.
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | /admin/login | Access key + TOTP login. |
+| POST | /admin/logout | Logout. |
+| GET | /admin/session | Active session. |
+| GET/PUT | /admin/fees | List and update fees. |
+| PUT | /admin/fees/bulk | Bulk fee update. |
+| PUT | /admin/fees/[key] | Single fee update. |
+| GET/POST | /admin/prices | Price management. |
+| GET/POST | /admin/keys | Access key management. |
+| GET | /admin/orders/topup | List Top Up orders. |
+| GET | /admin/orders/sell | List Sell orders. |
+| POST | /admin/orders/sell/[id]/confirm-crypto | Confirm crypto. |
+| POST | /admin/orders/sell/[id]/confirm-payout | Confirm payout. |
+| GET/PUT | /admin/rewards | Reward configuration. |
+| PATCH | /admin/rewards/claims/[publicId] | Update claim. |
+| POST | /admin/rewards/claims/[publicId]/payout | Process payout. |
+| POST | /admin/rewards/claims/[publicId]/payout-test | Payout test (DRY-RUN). |
+| POST | /admin/rewards/claims/[publicId]/reconcile | Reward reconciliation. |
+| GET | /admin/security/events | Security events. |
+| GET/POST/PATCH/DELETE | /admin/security/bans | Ban management. |
+| GET/PUT | /admin/settings | System settings. |
+| PUT | /admin/settings/[key] | Single setting update. |
+| GET | /admin/stats | Stats. |
+| GET | /admin/stats/timeseries | Stats time series. |
+| GET | /admin/support | List tickets. |
+| GET/PATCH | /admin/support/[id] | Ticket detail and update. |
+| GET/POST | /admin/support/[id]/messages | Admin ticket conversation. |
+| GET | /admin/wallets/balance | Platform wallet balances. |
+| GET | /admin/health/xendit | Xendit integration health. |

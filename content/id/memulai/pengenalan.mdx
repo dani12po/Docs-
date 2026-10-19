@@ -1,0 +1,39 @@
+---
+title: "Pengenalan"
+description: "Apa itu KORAMP, siapa pengguna utamanya, dan apa yang bisa dilakukan produk ini."
+---
+
+## Apa itu KORAMP
+
+KORAMP adalah layanan **on-ramp dan off-ramp** crypto berbasis dompet (wallet-first). Pengguna bisa menukar Rupiah menjadi crypto (Top Up) dan sebaliknya menjual crypto menjadi Rupiah (Sell) tanpa perlu membuat akun atau registrasi.
+
+Produk ini menargetkan pengguna ritel yang ingin bertransaksi dengan dompet yang sudah mereka miliki, serta developer yang ingin mengintegrasikan ramp IDR dan crypto ke dalam aplikasi mereka.
+
+## Prinsip Wallet-First
+
+KORAMP tidak menyimpan private key atau seed phrase, dan tidak memiliki tabel pengguna (users) untuk pelanggan. Alamat dompet adalah identitas. Artinya:
+
+- Tidak ada akun, email, atau kata sandi pelanggan.
+- Tidak ada kustodi atas dana pengguna.
+- Riwayat transaksi tetap dapat dilacak melalui alamat dompet di ledger publik.
+
+## Yang Bisa Dilakukan
+
+- **Top Up**: bayar dengan Rupiah via Xendit QRIS, menerima crypto ke dompet tujuan.
+- **Sell**: mengirim crypto ke alamat deposit platform, menerima payout Rupiah ke rekening bank via Xendit Payout v3.
+- **Quote**: harga terkunci untuk sisi Top Up maupun Sell, lengkap dengan spread, biaya layanan, biaya jaringan, dan pajak.
+
+## Aset dan Jaringan
+
+KORAMP saat ini mendukung tiga aset di jaringan testnet:
+
+- **SOL** di Solana Devnet.
+- **ETH** di Base Sepolia (chain 84532).
+- **BNB** di BSC Testnet (chain 97).
+
+Ramp (Top Up dan Sell) aktif di ketiganya. Dukungan mainnet dan aset tambahan masuk dalam roadmap.
+
+## Langkah Berikutnya
+
+- Baca [Konsep Inti](/docs/id/memulai/konsep-inti) untuk memahami model wallet-first, quote, dan perbedaan Top Up dan Sell.
+- Lewati ke [Quickstart](/docs/id/memulai/quickstart) jika Anda ingin mulai mengintegrasikan.

@@ -1,0 +1,67 @@
+---
+title: "Roadmap"
+description: "Empat fase roadmap KORAMP: MVP yang sudah ship, program reward aktif, mainnet yang direncanakan, dan masa depan."
+---
+
+## Legenda
+
+Setiap fase memiliki badge status:
+
+| Badge | Arti |
+|---|---|
+| Sudah Ship | Telah dirilis dan berjalan. |
+| Aktif | Sedang berjalan/dikembangkan saat ini. |
+| Direncanakan | Masuk rencana berikutnya. |
+| Masa Depan | Visi jangka panjang. |
+
+## Fase 1 — MVP
+
+<Badge status="shipped">Sudah Ship</Badge>
+
+Fase awal KORAMP menghadirkan ramp wallet-first lengkap untuk Top Up dan Sell.
+
+- Top Up via Xendit QRIS menjadi crypto ke dompet.
+- Sell via deposit crypto menjadi payout IDR ke bank via Xendit Payout v3.
+- Aset SOL, ETH, dan BNB di testnet (Solana Devnet, Base Sepolia, BSC Testnet).
+- Quote dengan harga terkunci (spread, biaya layanan, biaya jaringan, pajak).
+- Progressive IP ban dan Redis rate limiting.
+- Admin access key dan TOTP.
+- Support ticket.
+- Analitik halaman yang menjaga privasi.
+- Ledger double-entry dan audit log.
+
+## Fase 2 — Aktif
+
+<Badge status="active">Aktif</Badge>
+
+Program reward berbasis transaksi sedang berjalan, dengan payout bersifat DRY-RUN.
+
+- Eligibility, progress tracking, dan reservasi klaim.
+- Payout DRY-RUN saja: tanpa akses treasury on-chain, tanpa penandatanganan, dan tanpa transfer; klaim tetap `PENDING_PAYOUT`.
+- Kualifikasi per siklus bulanan.
+- Anti-fraud review.
+- Terms versioning (`termsVersion 2026-09-v1`).
+
+## Fase 3 — Direncanakan
+
+<Badge status="planned">Direncanakan</Badge>
+
+Fase berikutnya memindahkan reward ke on-chain dan membuka jaringan mainnet.
+
+- Payout reward on-chain secara live (broadcast transaksi asli, pelacakan konfirmasi via `confirmations`/`requiredConfirmations`).
+- Jaringan mainnet (Solana Mainnet, Base Mainnet, BSC Mainnet).
+- Aset tambahan (misalnya stablecoin USDC/USDT).
+- Penguatan keandalan webhook.
+
+## Fase 4 — Masa Depan
+
+<Badge status="future">Masa Depan</Badge>
+
+Visi jangka panjang KORAMP untuk ekosistem yang lebih luas.
+
+- Tooling kepatuhan, AML, dan Travel Rule.
+- API merchant/hosted-checkout untuk pihak ketiga.
+- Rail fiat tambahan selain Xendit QRIS.
+- Rail payout yang diperluas.
+- Dokumentasi multi-bahasa.
+- SDK publik.

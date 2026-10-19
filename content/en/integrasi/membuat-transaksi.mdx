@@ -1,0 +1,289 @@
+---
+title: "Creating Transactions"
+description: "End-to-end guide for creating transactions in KORAMP: quotes, Top Up and Sell orders, Xendit payment, crypto delivery, and testnet code samples."
+---
+
+## Overview
+
+Every KORAMP transaction goes through the same four stages:
+
+1. **Quote** — a locked price is created for an IDR or crypto amount.
+2. **Order** — an order is created by atomically consuming the quote (single use).
+3. **Payment / deposit** — the user pays (Top Up via Xendit QRIS) or sends crypto (Sell).
+4. **Settlement** — the platform sends crypto (Top Up) or pays out IDR to a bank (Sell).
+
+All examples below use testnet networks and the base URL `https://your-koramp-instance/api`.
+
+## Test Prerequisites
+
+1. An EVM (MetaMask) or Solana (Phantom) wallet with a validated address format.
+2. Testnet networks added to the wallet:
+
+| Network | Chain ID | Testnet |
+|---|---|---|
+| Solana | — | Devnet |
+| Base | 84532 | Sepolia |
+| BSC | 97 | Testnet |
+
+3. Testnet faucets for gas (Base Sepolia, BSC Testnet) and SOL Devnet.
+4. A still-valid quote (auto-expires).
+
+## Step 1 — Create a Quote
+
+A quote gives a locked price and an ID used when creating the order.
+
+**Top Up** (user pays IDR):
+
+```bash
+curl -X POST https://your-koramp-instance/api/quotes/topup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "asset": "ETH",
+    "network": "BASE",
+    "idrAmount": "500000"
+  }'
+```
+
+**Sell** (user sells crypto):
+
+```bash
+curl -X POST https://your-koramp-instance/api/quotes/sell \
+  -H "Content-Type: application/json" \
+  -d '{
+    "asset": "ETH",
+    "network": "BASE",
+    "idrAmount": "500000"
+  }'
+```
+
+Sample response (200):
+
+```json
+{
+  "quoteId": "3f8a1c2e-9b4d-4e5f-8a6b-7c8d9e0f1a2b",
+  "type": "TOP_UP",
+  "asset": "ETH",
+  "network": "BASE",
+  "marketPrice": "26500000.00",
+  "exchangeRate": "26632500.00",
+  "idrAmount": "500000.00",
+  "cryptoAmount": "0.01877326",
+  "serviceFee": "5000.00",
+  "networkFee": "2500.00",
+  "tax": "5500.00",
+  "totalIdr": "500000.00",
+  "expiresAt": "2026-10-18T10:30:00.000Z"
+}
+```
+
+<Callout type="info" title="Single-use quote">
+Once used to create an order, the quote is marked consumed and cannot be reused. Save the `quoteId` — it's required when creating the order.
+</Callout>
+
+## Step 2 — Create a Top Up Order
+
+The Top Up order and the Xendit payment request are created server-side.
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/topup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "walletAddress": "0x1234...abcd",
+    "walletType": "EVM",
+    "quoteId": "3f8a1c2e-9b4d-4e5f-8a6b-7c8d9e0f1a2b",
+    "asset": "ETH",
+    "network": "BASE"
+  }'
+```
+
+Sample response (201):
+
+```json
+{
+  "order": {
+    "publicId": "krm-8x4k2m9p",
+    "status": "PAYMENT_PENDING",
+    "walletAddress": "0x1234...abcd",
+    "assetSymbol": "ETH",
+    "network": "BASE",
+    "cryptoAmount": "0.01877326",
+    "totalIdr": 500000,
+    "expiresAt": "2026-10-18T10:30:00.000Z"
+  },
+  "payment": {
+    "status": "PENDING",
+    "qrPayload": "00020101021226...",
+    "requestedAmount": 500000
+  }
+}
+```
+
+<Callout type="warning" title="Amount limits">
+Minimum and maximum order limits are set per asset and read from fee configuration. Out-of-range amounts are rejected at order creation.
+</Callout>
+
+## Step 3 — Pay via Xendit QRIS
+
+1. Render the `qrPayload` string from the order response as a QR code in your app or checkout page.
+2. The user scans the QRIS code with their banking/e-wallet app and pays.
+3. Xendit sends a webhook to the KORAMP server when payment succeeds.
+4. The server independently verifies the amount, then triggers crypto delivery to the destination wallet.
+
+Crypto delivery is handled automatically by the platform. You just monitor the status.
+
+## Step 4 — Monitor Delivery (Top Up)
+
+**Check order status**:
+
+```bash
+curl https://your-koramp-instance/api/orders/krm-8x4k2m9p
+```
+
+**Re-check on-chain delivery** (useful if status is stuck at `CRYPTO_PROCESSING`):
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/krm-8x4k2m9p/check-delivery
+```
+
+Sample response once confirmed:
+
+```json
+{
+  "status": "COMPLETED",
+  "txHash": "0xabc123...def456",
+  "confirmations": 12
+}
+```
+
+## Sell Flow — Full Summary
+
+1. **Create a SELL quote** (Step 1).
+2. **Create a Sell order**:
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/sell \
+  -H "Content-Type: application/json" \
+  -d '{
+    "walletAddress": "0x1234...abcd",
+    "walletType": "EVM",
+    "quoteId": "3f8a1c2e-9b4d-4e5f-8a6b-7c8d9e0f1a2b",
+    "asset": "ETH",
+    "network": "BASE",
+    "bankName": "BCA",
+    "accountNumber": "1234567890",
+    "accountName": "Budi Santoso"
+  }'
+```
+
+The response contains `depositAddress` — the address the user sends crypto to.
+
+```json
+{
+  "order": {
+    "publicId": "kms-3n7q1w5e",
+    "status": "AWAITING_CRYPTO",
+    "depositAddress": "0x9876...wxyz",
+    "cryptoAmount": "0.01877326",
+    "requiredConfirmations": 12,
+    "expiresAt": "2026-10-18T11:00:00.000Z"
+  }
+}
+```
+
+3. **Send crypto** from the user's wallet to `depositAddress` with an amount **exactly** equal to `cryptoAmount`.
+4. **Submit the transaction hash** (required for EVM networks for fast tracking):
+
+```bash
+curl -X POST https://your-koramp-instance/api/orders/kms-3n7q1w5e/submit-tx \
+  -H "Content-Type: application/json" \
+  -d '{ "txHash": "0xabc123...def456" }'
+```
+
+The backend independently verifies the hash: sender, recipient, amount, and receipt status. Invalid hashes are rejected and logged to the audit log.
+
+5. **Automatic payout** — once on-chain confirmations reach `requiredConfirmations`, IDR is transferred to the bank account via Xendit Payout v3.
+
+## TypeScript Client Example
+
+Helper sample to test the full flow from an app or script:
+
+```typescript
+const BASE_URL = "https://your-koramp-instance/api";
+
+async function createTopUpOrder(walletAddress: string) {
+  const quote = await fetch(`${BASE_URL}/quotes/topup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset: "ETH", network: "BASE", idrAmount: "500000" }),
+  }).then((r) => r.json());
+
+  const res = await fetch(`${BASE_URL}/orders/topup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      walletAddress,
+      walletType: "EVM",
+      quoteId: quote.quoteId,
+      asset: "ETH",
+      network: "BASE",
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Order failed: ${res.status}`);
+  return res.json(); // { order, payment }
+}
+
+async function pollUntilDone(publicId: string, tries = 20) {
+  for (let i = 0; i < tries; i++) {
+    const order = await fetch(`${BASE_URL}/orders/${publicId}`).then((r) => r.json());
+    if (order.status === "COMPLETED") return order;
+    if (order.status === "FAILED") throw new Error(order.failureReason ?? "Order failed");
+    await new Promise((r) => setTimeout(r, 10_000));
+  }
+  throw new Error("Timeout waiting for settlement");
+}
+
+async function testDelivery(publicId: string) {
+  const res = await fetch(`${BASE_URL}/orders/${publicId}/check-delivery`, { method: "POST" });
+  return res.json(); // { status, txHash?, confirmations? }
+}
+```
+
+## Testnet Test Checklist
+
+Use this checklist to test the end-to-end flow before production:
+
+| # | Scenario | Verified |
+|---|---|---|
+| 1 | Create a quote then a Top Up order | Quote consumed atomically; cannot be used twice. |
+| 2 | Pay the QRIS `qrPayload` | Webhook received; amount verified; crypto sent. |
+| 3 | Order stuck at `CRYPTO_PROCESSING` | `check-delivery` resumes without double-broadcast. |
+| 4 | Create a Sell order | Unique deposit address per order; bank details stored. |
+| 5 | Send crypto then `submit-tx` | Hash verified on-chain (from/to/amount/receipt). |
+| 6 | Submit a tx hash from another wallet | Rejected: `from` must match the order wallet. |
+| 7 | Repeat `submit-tx` with the same hash | Idempotent — no double-processing. |
+| 8 | Fulfill confirmations | Payout triggered automatically via Xendit Payout v3. |
+| 9 | Let the order expire | Order ends with `failureReason`; doesn't hang. |
+
+<Callout type="warning" title="Don't test on mainnet">
+All testing must be done on testnet (Solana Devnet, Base Sepolia, BSC Testnet). On-chain transfers are public and irreversible.
+</Callout>
+
+## Order Statuses to Know
+
+| Status | Meaning |
+|---|---|
+| `PAYMENT_PENDING` | Awaiting Xendit QRIS payment (Top Up). |
+| `CRYPTO_PROCESSING` | Payment received; crypto being sent/confirmed. |
+| `AWAITING_CRYPTO` | Awaiting crypto deposit from the user (Sell). |
+| `CRYPTO_DETECTED` | Deposit seen on-chain, not enough confirmations yet. |
+| `CONFIRMING` | Confirmations progressing toward `requiredConfirmations`. |
+| `CRYPTO_CONFIRMED` | Confirmations sufficient; payout being processed. |
+| `COMPLETED` | Transaction complete. |
+| `FAILED` / `PAYMENT_CREATE_FAILED` | Failed; see `failureReason` for details. |
+
+## Next Steps
+
+- See [Quote & Pricing](/docs/en/integrasi/quote-pricing) for price components.
+- See [Transaction Flow](/docs/en/integrasi/alur-transaksi) for technical details of each stage.
+- See [On-Ramp & Off-Ramp](/docs/en/integrasi/on-ramp-off-ramp) for visibility and compliance.

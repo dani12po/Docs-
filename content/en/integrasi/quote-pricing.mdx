@@ -1,0 +1,40 @@
+---
+title: "Quote & Pricing"
+description: "How KORAMP quotes work: market price, spread, service fee, network fee, tax, locked price, and expiry."
+---
+
+## Quote Model
+
+A quote is a locked price for a Top Up or Sell. It's created before an order and consumed atomically when the order is created.
+
+### Components
+
+| Component | Description |
+|---|---|
+| `marketPrice` | Reference market price for the asset. |
+| `spread` | Difference between market price and the applied rate. |
+| `serviceFee` | Service fee in IDR. |
+| `networkFee` | Network fee in IDR (or SOL ATA fee for SOL Top Up, deducted from crypto output). |
+| `tax` | Tax in IDR, computed from the configured tax rate. |
+| `totalIdr` | Final IDR amount the user pays (Top Up) or receives (Sell, as `totalIdrPayout`). |
+| `cryptoAmount` | Crypto amount to be received (Top Up) or sent (Sell). |
+| `expiresAt` | Quote expiry timestamp; cannot be used after this. |
+
+## Atomic Consumption
+
+A quote can only be used once. Consumption is atomic (single `UPDATE ... WHERE usedAt IS NULL`), so concurrent order creations can't reuse the same quote. This prevents double-spend of a locked price.
+
+## Expiry
+
+Quotes have an `expiresAt` timestamp. After expiry:
+- Creating an order with the quote fails.
+- The user must request a new quote (price may have changed).
+
+## Fee Configuration
+
+Fees are defined per asset and order type in `FeeConfig`:
+- `serviceFeeRate`, `networkFeeRate`, `taxRate` (percent of gross).
+- `minOrderIdr`, `maxOrderIdr` (order limits).
+- `solAtaFeeIdr` — SOL ATA fee in SOL units (deducted from the crypto output when the recipient wallet doesn't yet have an ATA).
+
+See [Architecture → Database](/docs/en/arsitektur/database) for the full schema.

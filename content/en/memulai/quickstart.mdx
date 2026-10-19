@@ -1,0 +1,60 @@
+---
+title: "Quickstart"
+description: "Short steps to set up KORAMP integration: assets, wallets, quotes, and orders."
+---
+
+## Prerequisites
+
+Before starting, make sure you understand the following core concepts:
+
+- Wallet-first model and wallet addresses as identity.
+- The difference between Top Up (Rupiah to crypto) and Sell (crypto to Rupiah).
+- Supported assets and networks (currently testnet).
+
+## 1. Choose Asset & Network
+
+Decide which asset to use. Each asset is bound to one network:
+
+| Asset | Network | Chain ID |
+|---|---|---|
+| SOL | Solana Devnet | - |
+| ETH | Base Sepolia | 84532 |
+| BNB | BSC Testnet | 97 |
+
+## 2. Validate Wallet
+
+Use the wallet validation endpoint to confirm the combination of address, network, and asset. For EVM, the user must sign a message to prove ownership (proof-of-ownership).
+
+<AnimatedFlowchart
+  flows={[
+    {
+      title: 'Integration Flow',
+      direction: 'From asset to order',
+      steps: [
+        { icon: 'Wallet', label: 'Asset & Network', desc: 'SOL, ETH, or BNB on testnet' },
+        { icon: 'ShieldCheck', label: 'Validate Wallet', desc: 'Address + proof-of-ownership' },
+        { icon: 'FileText', label: 'Create Quote', desc: 'Locked-in price via API' },
+        { icon: 'ArrowRightLeft', label: 'Create Order', desc: 'Top Up or Sell via API' },
+      ],
+    },
+  ]}
+/>
+
+## 3. Create Quote
+
+A quote provides a locked-in price for a desired amount of Rupiah or crypto. The quote stores price components: market price, spread, service fee, network fee, and tax.
+
+## 4. Create Order
+
+After the quote is created, proceed to order creation:
+
+- **Top Up**: create a Top Up order, pay via Xendit QRIS, then crypto is sent to the destination wallet after payment is verified.
+- **Sell**: create a Sell order, send crypto to the platform deposit address, then Rupiah payout is sent after the deposit is confirmed.
+
+## 5. Monitor Status
+
+Monitor order and deposit status via the status endpoint. For Sell, on-chain confirmations are tracked by confirmation count.
+
+## Next Steps
+
+See [Transaction Flow](/docs/en/integrasi/alur-transaksi) for the full flow, or [Quote & Pricing](/docs/en/integrasi/quote-pricing) for price components.
