@@ -42,6 +42,17 @@ Program reward berbasis transaksi sedang berjalan, dengan payout bersifat DRY-RU
 - Anti-fraud review.
 - Terms versioning (`termsVersion 2026-09-v1`).
 
+### Uji Coba Payment Gateway dengan MoonPay
+
+<Callout type="info" title="Kemitraan Payment Gateway dengan MoonPay">
+  KORAMP sedang menjalankan pilot integrasi payment gateway bersama MoonPay sebagai merchant of record. Sebagai partner kepatuhan, MoonPay menangani KYC/AML, verifikasi fraud, serta kepatuhan regulasi lintas-wilayah — memperluas jangkauan layanan KORAMP ke lebih banyak negara tanpa menanggung beban kepatuhan internal. Integrasi ini berada dalam tahap uji coba terbatas sebelum peluncuran bertahap kepada pengguna.
+</Callout>
+
+- Pilot integrasi MoonPay Widget — alur on-ramp (beli crypto) dan off-ramp (jual crypto) dengan dukungan multi-mata uang fiat (IDR, USD, EUR, dan lainnya).
+- Platform web dalam tahap beta testing tertutup; akses dibatasi sambil memvalidasi stabilitas, keamanan, dan pengalaman pengguna sebelum peluncuran publik.
+- Keamanan transaksi diperkuat dengan URL signing HMAC-SHA256 dan verifikasi signature webhook MoonPay untuk integritas data end-to-end.
+- Arsitektur dirancang modular: MoonPay berfungsi sebagai jalur alternatif di samping QRIS native, sehingga transisi ke produksi dapat dilakukan per-wilayah tanpa mengganggu alur yang sudah berjalan.
+
 ## Fase 3 — Direncanakan
 
 <Badge status="planned">Direncanakan</Badge>

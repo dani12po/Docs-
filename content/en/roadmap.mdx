@@ -42,6 +42,17 @@ The transaction-based rewards program is running, with payouts in DRY-RUN mode.
 - Anti-fraud review.
 - Terms versioning (`termsVersion 2026-09-v1`).
 
+### Payment Gateway Pilot with MoonPay
+
+<Callout type="info" title="Payment Gateway Partnership with MoonPay">
+  KORAMP is running a pilot payment gateway integration with MoonPay as the merchant of record. As the compliance partner, MoonPay handles KYC/AML, fraud verification, and cross-border regulatory compliance — extending KORAMP's service reach to more countries without bearing the internal compliance burden. The integration is in a limited trial phase ahead of a phased rollout to users.
+</Callout>
+
+- MoonPay Widget integration pilot — on-ramp (buy crypto) and off-ramp (sell crypto) flows with multi-fiat support (IDR, USD, EUR, and more).
+- Web platform in closed beta testing; access is restricted while validating stability, security, and user experience ahead of a public launch.
+- Transaction security reinforced with HMAC-SHA256 URL signing and MoonPay webhook signature verification for end-to-end data integrity.
+- The architecture is modular by design: MoonPay acts as an alternative rail alongside the native QRIS flow, so the production rollout can proceed per-region without disrupting the existing, running flow.
+
 ## Phase 3 — Planned
 
 <Badge status="planned">Planned</Badge>
