@@ -19,8 +19,8 @@ Keduanya melewati tahap quote, pembuatan order, verifikasi, dan penyelesaian.
       direction: 'Rupiah masuk → crypto keluar',
       steps: [
         { icon: 'FileText', label: 'Quote', desc: 'Harga terkunci dibuat' },
-        { icon: 'ArrowRightLeft', label: 'Order', desc: 'TopUpOrder + payment Xendit' },
-        { icon: 'CreditCard', label: 'Bayar', desc: 'Pembayaran fiat via Xendit' },
+        { icon: 'ArrowRightLeft', label: 'Order', desc: 'TopUpOrder + sesi MoonPay' },
+        { icon: 'CreditCard', label: 'Bayar', desc: 'Pembayaran fiat via MoonPay' },
         { icon: 'Coins', label: 'Kirim Crypto', desc: 'Crypto dikirim ke dompet tujuan' },
         { icon: 'ShieldCheck', label: 'Selesai', desc: 'Status COMPLETED' },
       ],
@@ -33,7 +33,7 @@ Keduanya melewati tahap quote, pembuatan order, verifikasi, dan penyelesaian.
         { icon: 'ArrowRightLeft', label: 'Order', desc: 'SellOrder + alamat deposit' },
         { icon: 'Coins', label: 'Kirim Crypto', desc: 'Crypto dikirim ke deposit platform' },
         { icon: 'Landmark', label: 'Konfirmasi', desc: 'On-chain confirmations tercapai' },
-        { icon: 'CreditCard', label: 'Payout', desc: 'Rupiah via Xendit Payout v3' },
+        { icon: 'CreditCard', label: 'Payout', desc: 'Rupiah via MoonPay' },
       ],
     },
   ]}
@@ -43,8 +43,8 @@ Keduanya melewati tahap quote, pembuatan order, verifikasi, dan penyelesaian.
 
 1. **Quote**: pengguna meminta penawaran harga. Quote menyimpan harga pasar, spread, biaya layanan, biaya jaringan, dan pajak.
 2. **Buat order**: order Top Up dibuat dengan alamat dompet tujuan dan quote yang dipakai. Quote dikonsumsi secara atomik.
-3. **Pembayaran fiat**: sistem membuat order Xendit QRIS dan mengembalikan URL pembayaran.
-4. **Webhook Xendit**: Xendit mengirim notifikasi saat pembayaran berhasil.
+3. **Pembayaran fiat**: sistem membuat sesi pembayaran MoonPay (URL widget ditandatangani server-side) dan mengembalikannya ke klien.
+4. **Webhook MoonPay**: MoonPay mengirim notifikasi (header `Moonpay-Signature-V2`) saat pembayaran berhasil.
 5. **Pengiriman crypto**: platform mengirim crypto ke dompet tujuan dan mencatat hash transaksi.
 6. **Selesai**: order berstatus selesai saat `completedAt` terisi.
 
@@ -54,7 +54,7 @@ Keduanya melewati tahap quote, pembuatan order, verifikasi, dan penyelesaian.
 2. **Buat order**: order Sell dibuat beserta alamat deposit platform dan detail bank payout per-transaksi.
 3. **Deposit**: pengguna mengirim crypto ke alamat deposit platform.
 4. **Pemindaian dan konfirmasi**: scheduler memindai deposit dan melacak `confirmations` hingga mencapai `requiredConfirmations`.
-5. **Payout**: setelah dikonfirmasi, fiat ditransfer ke rekening bank via Xendit Payout v3.
+5. **Payout**: setelah dikonfirmasi, fiat ditransfer ke rekening bank via MoonPay.
 6. **Selesai**: order berstatus selesai saat payout berhasil.
 
 ## Status Order

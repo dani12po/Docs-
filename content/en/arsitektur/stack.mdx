@@ -23,10 +23,11 @@ description: "KORAMP's core technologies: Next.js, React, TypeScript, Prisma, Re
 
 ## Payment Integration
 
-- **Xendit Payments API v3** for QRIS fiat payments (Top Up).
-- **Xendit Payout API v3** for IDR bank transfers (Sell).
+- **MoonPay Widget / Platform** as the payment gateway and merchant of record for fiat payments (Top Up) — handles KYC, AML, fraud, and cross-region compliance.
+- **MoonPay** also processes fiat payouts to bank accounts (Sell).
+- HMAC-SHA256 URL signing and `Moonpay-Signature-V2` webhook verification for transaction integrity.
 
-Legacy providers KiPay and TransFi are retired; database columns are kept for history only.
+Legacy providers KiPay, TransFi, and Xendit are retired; database columns are kept for historical records only.
 
 ## Security
 

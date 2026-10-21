@@ -1,6 +1,6 @@
 ---
 title: "Membuat Transaksi"
-description: "Panduan lengkap membuat transaksi di KORAMP: quote, order Top Up dan Sell, pembayaran via Xendit, pengiriman crypto, dan contoh kode untuk pengujian di testnet."
+description: "Panduan lengkap membuat transaksi di KORAMP: quote, order Top Up dan Sell, pembayaran via MoonPay, pengiriman crypto, dan contoh kode untuk pengujian di testnet."
 ---
 
 ## Gambaran Umum
@@ -9,25 +9,10 @@ Setiap transaksi di KORAMP dibuat melalui empat tahap yang sama:
 
 1. **Quote** — harga terkunci dibuat untuk jumlah Rupiah atau crypto.
 2. **Order** — order dibuat dengan konsumsi quote secara atomik (sekali pakai).
-3. **Pembayaran / deposit** — pengguna membayar (Top Up via Xendit) atau mengirim crypto (Sell).
-4. **Penyelesaian** — platform mengirim crypto (Top Up) atau payout Rupiah ke bank (Sell).
+3. **Pembayaran / deposit** — pengguna membayar (Top Up via MoonPay) atau mengirim crypto (Sell).
+4. **Penyelesaian** — platform mengirim crypto (Top Up) atau payout Rupiah ke bank via MoonPay (Sell).
 
-Semua contoh di bawah memakai jaringan testnet dan base URL `https://your-koramp-instance/api`.
-
-<AnimatedFlowchart
-  flows={[
-    {
-      title: 'Alur Umum Transaksi',
-      direction: 'Berlaku untuk Top Up dan Sell',
-      steps: [
-        { icon: 'FileText', label: 'Quote', desc: 'Harga terkunci, sekali pakai' },
-        { icon: 'ArrowRightLeft', label: 'Order', desc: 'TopUpOrder atau SellOrder dibuat' },
-        { icon: 'CreditCard', label: 'Bayar / Kirim', desc: 'Fiat via Xendit atau crypto ke deposit' },
-        { icon: 'ShieldCheck', label: 'Selesai', desc: 'Crypto terkirim atau payout bank' },
-      ],
-    },
-  ]}
-/>
+MoonPay bertindak sebagai **merchant of record** untuk sisi fiat — memproses pembayaran, KYC, AML, dan compliance — sementara KORAMP menangani sisi crypto (pengiriman, deposit, konfirmasi, dan ledger). Semua contoh di bawah memakai jaringan testnet dan base URL `https://your-koramp-instance/api`.
 
 ## Prasyarat Pengujian
 
@@ -97,7 +82,7 @@ Begitu dipakai untuk membuat order, quote ditandai terpakai dan tidak dapat dipa
 
 ## Langkah 2 — Buat Order Top Up
 
-Order Top Up dibuat beserta payment request Xendit secara server-side.
+Order Top Up dibuat beserta sesi pembayaran MoonPay secara server-side. Backend menandatangani URL widget MoonPay dengan Secret Key (HMAC-SHA256) lalu mengembalikan URL bertanda ke klien.
 
 ```bash
 curl -X POST https://your-koramp-instance/api/orders/topup \
@@ -127,10 +112,10 @@ Contoh respons (201):
   },
   "payment": {
     "status": "PENDING",
-    "payUrl": "https://checkout.xendit.co.id/...",
+    "widgetUrl": "https://buy-sandbox.moonpay.com/?apiKey=pk_test_...&currencyCode=eth&walletAddress=0x1234...abcd&signature=...",
     "requestedAmount": 500000
   },
-  "providerOrderId": "ap-order-000123"
+  "providerOrderId": "mp_txn_000123"
 }
 ```
 
@@ -138,12 +123,13 @@ Contoh respons (201):
 Batas minimum dan maksimum order ditentukan per aset dan dibaca dari konfigurasi biaya. Nominal di luar batas ditolak saat pembuatan order.
 </Callout>
 
-## Langkah 3 — Bayar via Xendit
+## Langkah 3 — Bayar via MoonPay
 
-1. Buka `payUrl` dari respons order di browser atau sematkan di aplikasi.
-2. Selesaikan pembayaran dengan metode yang tersedia di Xendit (transfer bank atau kartu).
-3. Xendit mengirim webhook ke server KORAMP saat pembayaran berhasil.
-4. Server memverifikasi amount secara independen lalu memicu pengiriman crypto ke dompet tujuan.
+1. Buka `widgetUrl` dari respons order di browser, atau sematkan widget MoonPay di aplikasi (variant `overlay` atau `embedded`).
+2. Selesaikan KYC MoonPay bila pengguna baru (MoonPay sebagai merchant of record menangani verifikasi identitas).
+3. Pilih metode pembayaran yang tersedia di wilayah pengguna — kartu kredit/debit, Apple Pay, Google Pay, atau transfer bank.
+4. MoonPay mengirim webhook ke server KORAMP saat pembayaran berhasil (header `Moonpay-Signature-V2`).
+5. Server memverifikasi signature webhook dan amount secara independen, lalu memicu pengiriman crypto ke dompet tujuan.
 
 Pengiriman crypto dilakukan otomatis oleh platform. Anda tinggal memantau statusnya.
 
@@ -217,7 +203,7 @@ curl -X POST https://your-koramp-instance/api/orders/kms-3n7q1w5e/submit-tx \
 
 Backend memverifikasi hash secara independen: pengirim, penerima, jumlah, dan status receipt. Hash yang tidak valid ditolak dan dicatat di log audit.
 
-5. **Payout otomatis** — setelah konfirmasi on-chain mencapai `requiredConfirmations`, Rupiah ditransfer ke rekening bank via Xendit Payout v3.
+5. **Payout otomatis** — setelah konfirmasi on-chain mencapai `requiredConfirmations`, Rupiah ditransfer ke rekening bank via MoonPay.
 
 ## Contoh Kode TypeScript (Client)
 
@@ -272,13 +258,13 @@ Gunakan checklist ini untuk menguji alur end-to-end sebelum produksi:
 | # | Skenario | Yang diverifikasi |
 |---|---|---|
 | 1 | Buat quote lalu order Top Up | Quote terkonsumsi atomik; tidak bisa dipakai dua kali. |
-| 2 | Bayar `payUrl` via Xendit | Webhook diterima; amount diverifikasi; crypto terkirim. |
+| 2 | Bayar via widget MoonPay (sandbox) | Webhook diterima & signature terverifikasi; amount diverifikasi; crypto terkirim. |
 | 3 | Order stuck di `CRYPTO_PROCESSING` | `check-delivery` me-resume tanpa double-broadcast. |
 | 4 | Buat order Sell | Alamat deposit unik per order; detail bank tersimpan. |
 | 5 | Kirim crypto lalu `submit-tx` | Hash diverifikasi on-chain (from/to/amount/receipt). |
 | 6 | Kirim hash tx dari wallet lain | Ditolak: `from` harus cocok dengan wallet order. |
 | 7 | Ulangi `submit-tx` dengan hash yang sama | Idempoten — tidak ada double-processing. |
-| 8 | Penuhkan konfirmasi | Payout terpicu otomatis via Xendit Payout v3. |
+| 8 | Penuhkan konfirmasi | Payout terpicu otomatis via MoonPay. |
 | 9 | Biarkan order kedaluwarsa | Order berakhir dengan `failureReason`; tidak menggantung. |
 
 <Callout type="warning" title="Jangan uji di mainnet">
@@ -289,14 +275,14 @@ Seluruh pengujian wajib dilakukan di testnet (Solana Devnet, Base Sepolia, BSC T
 
 | Status | Arti |
 |---|---|
-| `PAYMENT_PENDING` | Menunggu pembayaran Xendit (Top Up). |
+| `PAYMENT_PENDING` | Menunggu pembayaran MoonPay (Top Up). |
 | `CRYPTO_PROCESSING` | Pembayaran diterima; crypto sedang dikirim/dikonfirmasi. |
 | `AWAITING_CRYPTO` | Menunggu deposit crypto dari pengguna (Sell). |
 | `CRYPTO_DETECTED` | Deposit terlihat on-chain, belum cukup konfirmasi. |
 | `CONFIRMING` | Konfirmasi berjalan menuju `requiredConfirmations`. |
 | `CRYPTO_CONFIRMED` | Konfirmasi cukup; payout sedang diproses. |
 | `COMPLETED` | Transaksi selesai. |
-| `FAILED` / `PAYMENT_CREATE_FAILED` | Gagal; lihat `failureReason` untuk detail. |
+| `FAILED` atau `PAYMENT_CREATE_FAILED` | Gagal; lihat `failureReason` untuk detail. |
 
 ## Langkah Berikutnya
 

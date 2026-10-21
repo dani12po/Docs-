@@ -22,7 +22,7 @@ Create and monitor orders.
 
 | Method | Endpoint | Notes |
 |---|---|---|
-| POST | /orders/topup | Creates a TopUpOrder + Xendit QRIS payment request. |
+| POST | /orders/topup | Creates a TopUpOrder + MoonPay payment session. |
 | POST | /orders/sell | Creates a SellOrder + deposit address + bank payout details. |
 | GET | /orders/[publicId] | Order detail by public ID. |
 | GET/POST | /orders/[publicId]/payment-status | Payment status. |
@@ -35,7 +35,7 @@ Create and monitor orders.
 ## /payments
 
 <Callout type="warning" title="No public endpoint">
-There's no separate public `/payments` endpoint. The Payment object (Xendit QRIS) is created server-side inside `POST /orders/topup`; its status is accessed via `/orders/[publicId]/payment-status`.
+There's no separate public `/payments` endpoint. The Payment object (MoonPay session) is created server-side inside `POST /orders/topup`; its status is accessed via `/orders/[publicId]/payment-status`.
 </Callout>
 
 ## /prices
@@ -85,8 +85,7 @@ There's no separate public `/payments` endpoint. The Payment object (Xendit QRIS
 
 | Method | Endpoint | Notes |
 |---|---|---|
-| POST | /webhooks/xendit/payment | Xendit payment callback (`X-Callback-Token` = `XENDIT_WEBHOOK_TOKEN`). |
-| POST | /webhooks/xendit/payout | Xendit payout callback. |
+| POST | /webhooks/moonpay | MoonPay transaction callback (`Moonpay-Signature-V2`; HMAC-SHA256 verified). |
 
 Webhooks are signal-only; fulfillment is processed server-side and idempotently.
 
@@ -138,4 +137,4 @@ Admin access uses an access key + TOTP. Most endpoints require an admin session.
 | GET/PATCH | /admin/support/[id] | Ticket detail and update. |
 | GET/POST | /admin/support/[id]/messages | Admin ticket conversation. |
 | GET | /admin/wallets/balance | Platform wallet balances. |
-| GET | /admin/health/xendit | Xendit integration health. |
+| GET | /admin/health/moonpay | MoonPay integration health. |

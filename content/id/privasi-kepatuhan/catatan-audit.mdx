@@ -1,6 +1,6 @@
 ---
 title: "Catatan & Audit"
-description: "AuditLog, LedgerEntry double-entry, dan idempotensi webhook XenditWebhook."
+description: "AuditLog, LedgerEntry double-entry, dan idempotensi webhook MoonPayWebhook."
 ---
 
 ## AuditLog
@@ -30,14 +30,13 @@ Setiap pergerakan memiliki sisi kredit dan debit yang seimbang, sehingga tidak a
 
 ## Idempotensi Webhook
 
-Webhook Xendit disimpan di XenditWebhook dengan keunikan gabungan pada `kind`, `event`, `orderId`, dan `payoutId`. Ini memastikan event yang sama tidak diproses dua kali.
+Webhook MoonPay disimpan di MoonPayWebhook dengan keunikan gabungan pada `eventType`, `transactionId`, dan `updatedAt`. Ini memastikan event yang sama tidak diproses dua kali. Setiap webhook diverifikasi via header `Moonpay-Signature-V2` (HMAC-SHA256 atas `timestamp.rawBody` dengan Webhook API Key).
 
 | Kolom | Fungsi |
 |---|---|
-| kind | PAYMENT atau PAYOUT. |
-| event | Jenis event, misalnya payment.success. |
-| orderId | ID order Xendit. |
-| payoutId | ID payout Xendit. |
+| eventType | Jenis event, misalnya `transaction_created` atau `transaction_updated`. |
+| transactionId | ID transaksi MoonPay. |
+| updatedAt | Timestamp dari payload (untuk dedup dan pemesanan). |
 | payload | JSON mentah untuk audit. |
 
 ## Manfaat

@@ -23,8 +23,9 @@ description: "Teknologi utama KORAMP: Next.js, React, TypeScript, Prisma, Redis,
 
 ## Integrasi Pembayaran
 
-- **Xendit QRIS API** untuk pembayaran fiat (Top Up).
-- **Xendit Payout v3** untuk transfer Rupiah ke bank (Sell).
+- **MoonPay Widget/Platform** sebagai payment gateway dan merchant of record untuk pembayaran fiat (Top Up) — menangani KYC, AML, fraud, dan compliance lintas-wilayah.
+- **MoonPay** juga memproses payout fiat ke rekening bank (Sell).
+- URL signing HMAC-SHA256 dan verifikasi webhook `Moonpay-Signature-V2` untuk integritas transaksi.
 
 Provider legacy KiPay, TransFi, dan Xendit sudah pensiun; kolom database disimpan untuk riwayat saja.
 

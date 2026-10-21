@@ -3,12 +3,12 @@ title: "Kepatuhan"
 description: "Model KYC-less KORAMP, apa yang terlihat on-chain dan off-chain, serta audit trail."
 ---
 
-## Model KYC-Less
+## Model KYC
 
-KORAMP dirancang tanpa proses Know Your Customer (KYC) untuk alur ritel. Alamat dompet adalah identitas, bukan akun terdaftar. Konsekuensinya, KORAMP tidak mengumpulkan dokumen identitas atau data diri pelanggan.
+KORAMP sendiri dirancang wallet-first tanpa proses Know Your Customer (KYC) internal — alamat dompet adalah identitas, bukan akun terdaftar, dan KORAMP tidak mengumpulkan dokumen identitas pelanggan. Namun, karena pemrosesan fiat ditangani oleh MoonPay sebagai **merchant of record**, MoonPay melakukan KYC/AML pada pengguna selama alur pembayaran sesuai regulasi yang berlaku di wilayah pengguna.
 
-<Callout type="info" title="Implikasi">
-Tanpa KYC, KORAMP tidak dapat menyediakan mekanisme kepatuhan yang bergantung pada identitas terverifikasi (misalnya Travel Rule klasik). Ini adalah trade-off desain yang disengaja.
+<Callout type="info" title="Pembagian tanggung jawab kepatuhan">
+KORAMP tidak menyimpan data KYC; verifikasi identitas, screening, dan kepatuhan transaksi fiat ditangani MoonPay. KORAMP hanya menyimpan jejak transaksi on-chain dan metadata order. Trade-off desain: KORAMP tidak menjalankan mekanisme kepatuhan berbasis identitas sendiri (misalnya Travel Rule klasik) — hal itu menjadi tanggung jawab MoonPay pada sisi fiat.
 </Callout>
 
 ## On-Chain vs Off-Chain
@@ -27,7 +27,7 @@ KORAMP menjaga jejak audit internal meskipun tanpa KYC:
 
 - **AuditLog** mencatat aksi penting, aktor, dan metadata.
 - **LedgerEntry** mencatat pergerakan dana secara double-entry (CREDIT/DEBIT).
-- **XenditWebhook** memastikan setiap event webhook hanya diproses sekali.
+- **MoonPayWebhook** memastikan setiap event webhook MoonPay hanya diproses sekali.
 
 ## Batas Kepatuhan
 

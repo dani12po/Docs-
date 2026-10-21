@@ -22,7 +22,7 @@ description: "How KORAMP records transactions: AuditLog, LedgerEntry, and webhoo
 
 ## Webhook Idempotency
 
-`XenditWebhook` enforces idempotency with a unique constraint on `(kind, event, paymentRequestId, xenditPayoutId)`. Re-delivered webhooks update the existing row instead of creating duplicates, preventing double-fulfillment.
+`MoonPayWebhook` enforces idempotency using a unique constraint on `(eventType, transactionId, updatedAt)`. Re-delivered webhooks are de-duplicated against this key, preventing double-fulfillment. Every webhook is verified via the `Moonpay-Signature-V2` header (HMAC-SHA256 over `timestamp.rawBody` using the Webhook API Key).
 
 ## Privacy-Preserving Analytics
 

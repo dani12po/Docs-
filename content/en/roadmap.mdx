@@ -20,8 +20,8 @@ Each phase has a status badge:
 
 The initial phase delivers a complete wallet-first ramp for Top Up and Sell.
 
-- Top Up via Xendit QRIS to crypto in the wallet.
-- Sell via crypto deposit to IDR bank payout via Xendit Payout v3.
+- Top Up via MoonPay (fiat to crypto) — credit/debit card, Apple Pay, Google Pay, and bank transfer. MoonPay as merchant of record handling KYC/AML and compliance.
+- Sell via crypto deposit to platform → on-chain confirmation → IDR bank payout via MoonPay.
 - Assets SOL, ETH, and BNB on testnet (Solana Devnet, Base Sepolia, BSC Testnet).
 - Quotes with locked pricing (spread, service fee, network fee, tax).
 - Progressive IP bans and Redis rate limiting.
@@ -51,7 +51,7 @@ The transaction-based rewards program is running, with payouts in DRY-RUN mode.
 - MoonPay Widget integration pilot — on-ramp (buy crypto) and off-ramp (sell crypto) flows with multi-fiat support (IDR, USD, EUR, and more).
 - Web platform in closed beta testing; access is restricted while validating stability, security, and user experience ahead of a public launch.
 - Transaction security reinforced with HMAC-SHA256 URL signing and MoonPay webhook signature verification for end-to-end data integrity.
-- The architecture is modular by design: MoonPay acts as an alternative rail alongside the native QRIS flow, so the production rollout can proceed per-region without disrupting the existing, running flow.
+- The architecture is modular by design: MoonPay serves as the primary payment gateway, supporting on-ramp (buy) and off-ramp (sell) across all supported regions.
 
 ## Phase 3 — Planned
 
@@ -72,7 +72,7 @@ KORAMP's long-term vision for a broader ecosystem.
 
 - Compliance, AML, and Travel Rule tooling.
 - Merchant/hosted-checkout API for third parties.
-- Additional fiat rails beyond Xendit QRIS.
+- Additional fiat rails beyond MoonPay.
 - Expanded payout rails.
 - Multi-language documentation.
 - Public SDK.

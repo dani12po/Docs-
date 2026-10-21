@@ -22,7 +22,7 @@ Membuat dan memantau order.
 
 | Method | Endpoint | Catatan |
 |---|---|---|
-| POST | /orders/topup | Membuat TopUpOrder + order Xendit QRIS. |
+| POST | /orders/topup | Membuat TopUpOrder + sesi pembayaran MoonPay. |
 | POST | /orders/sell | Membuat SellOrder + alamat deposit + detail bank payout. |
 | GET | /orders/[publicId] | Detail order berdasarkan public ID. |
 | GET/POST | /orders/[publicId]/payment-status | Status pembayaran. |
@@ -35,7 +35,7 @@ Membuat dan memantau order.
 ## /payments
 
 <Callout type="warning" title="Tidak ada endpoint publik">
-Tidak ada endpoint publik `/payments` terpisah. Objek Payment (Xendit QRIS) dibuat server-side di dalam `POST /orders/topup`; statusnya diakses lewat `/orders/[publicId]/payment-status`.
+Tidak ada endpoint publik `/payments` terpisah. Objek Payment (sesi MoonPay) dibuat server-side di dalam `POST /orders/topup`; statusnya diakses lewat `/orders/[publicId]/payment-status`.
 </Callout>
 
 ## /prices
@@ -85,8 +85,7 @@ Tidak ada endpoint publik `/payments` terpisah. Objek Payment (Xendit QRIS) dibu
 
 | Method | Endpoint | Catatan |
 |---|---|---|
-| POST | /webhooks/xendit/payment | Callback pembayaran (header `X-Callback-Token`). |
-| POST | /webhooks/xendit/payout | Callback payout. |
+| POST | /webhooks/moonpay | Callback transaksi MoonPay (header `Moonpay-Signature-V2`; verifikasi HMAC-SHA256). |
 
 Webhook bersifat signal-only; pemenuhan (fulfillment) diproses server-side dan idempoten.
 
@@ -138,4 +137,4 @@ Akses admin menggunakan access key + TOTP. Sebagian besar endpoint memerlukan se
 | GET/PATCH | /admin/support/[id] | Detail dan pembaruan tiket. |
 | GET/POST | /admin/support/[id]/messages | Percakapan tiket admin. |
 | GET | /admin/wallets/balance | Saldo dompet platform. |
-| GET | /admin/health/xendit | Kesehatan integrasi Xendit. |
+| GET | /admin/health/moonpay | Kesehatan integrasi MoonPay. |

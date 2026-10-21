@@ -29,9 +29,9 @@ Account numbers are never shown in full in the public area — at most the last 
 
 ## Payment Data
 
-QRIS payments are processed by third-party payment infrastructure. KORAMP records the provider order ID, amount, provider, and payment status from server-to-server verification — not from client claims.
+Fiat payments are processed by MoonPay, who acts as merchant of record and handles KYC/AML. KORAMP records the provider transaction ID, amount, and payment status from server-to-server verification — not from client claims.
 
-KORAMP does not store your card credentials, PIN, or bank credentials. Sensitive payment details are handled by the payment provider under its own policy.
+KORAMP does not store your card credentials, PIN, or bank credentials. Sensitive payment and identity data are handled by MoonPay under its own privacy policy.
 
 ## How Data Is Used
 
@@ -39,7 +39,7 @@ Data is used to run the KORAMP service: create and manage transactions, process 
 
 ## Third Parties
 
-Operating the app involves third-party services: blockchain networks (Solana, Base, BNB Chain) and their RPC providers, third-party IDR payment and bank-payout infrastructure (Xendit), market price sources, the TradingView chart embed, blockchain explorers, and hosting/infrastructure providers. Each is subject to its own privacy policy. KORAMP does not sell user data and does not share data for advertising.
+Operating the app involves third-party services: blockchain networks (Solana, Base, BNB Chain) and their RPC providers, MoonPay (payment gateway and merchant of record for fiat payments, KYC, and bank payouts), market price sources, the TradingView chart embed, blockchain explorers, and hosting/infrastructure providers. Each is subject to its own privacy policy. KORAMP does not sell user data and does not share data for advertising.
 
 ## Cookies and Local Storage
 

@@ -3,9 +3,13 @@ title: "Compliance"
 description: "KORAMP's KYC-less wallet-first compliance model: what's visible on-chain vs off-chain, and the audit trail."
 ---
 
-## KYC-less Wallet-First Model
+## KYC Model
 
-KORAMP operates without customer accounts and without KYC. A wallet address is the customer identity. This changes the shape of compliance compared to a hosted-account exchange.
+KORAMP itself is wallet-first with no internal KYC — a wallet address is the customer identity, and KORAMP collects no identity documents. However, since fiat processing is handled by MoonPay as the **merchant of record**, MoonPay performs KYC/AML on users during the payment flow, as required by the applicable regulations in the user's region.
+
+<Callout type="info" title="Compliance responsibility split">
+KORAMP does not store KYC data; identity verification, screening, and fiat transaction compliance are handled by MoonPay. KORAMP only stores on-chain transaction traces and order metadata. Trade-off: KORAMP does not run its own identity-based compliance mechanisms (e.g. classic Travel Rule) — that responsibility sits with MoonPay on the fiat side.
+</Callout>
 
 ## What Is Visible
 
@@ -14,18 +18,17 @@ KORAMP operates without customer accounts and without KYC. A wallet address is t
 | User wallet address | Yes | Yes |
 | Platform wallet address | Yes | Yes |
 | Asset and amount of transfers between KORAMP and the user | Yes | Yes |
-| Sender and recipient of the user's other private transfers | Yes | Yes |
-| Asset and amount of the user's other transfers | Yes | Only if the user shares a view key (not applicable — public chain) |
+| Sender and recipient of the user's other transfers | Yes | Yes |
 | User's private balances | Yes (public chain) | Yes (public chain) |
 
-Because KORAMP uses **public** on-chain transfers (not encrypted balances), sender, receiver, and amount are visible to anyone reading the blockchain. KORAMP does not offer private/encrypted transfers.
+Because KORAMP uses **public** on-chain transfers, sender, receiver, and amount are visible to anyone reading the blockchain. KORAMP does not offer private/encrypted transfers.
 
 ## Audit Trail
 
 Every significant event is recorded:
 - **AuditLog** — important actions with actor and metadata.
 - **LedgerEntry** — double-entry records (CREDIT/DEBIT) per wallet and asset.
-- **XenditWebhook** — idempotent webhook records keyed on kind, event, and IDs.
+- **MoonPayWebhook** — idempotent webhook records keyed on event type, transaction id, and updatedAt.
 
 ## Limits and Abuse Prevention
 

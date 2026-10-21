@@ -33,9 +33,9 @@ The two tables below show the visibility level for each field in each direction.
       </thead>
       <tbody>
         <tr>
-          <td>IDR Payment (QRIS)</td>
+          <td>IDR Payment</td>
           <td>Off-chain only</td>
-          <td>Fiat payment is processed by Xendit; not recorded on-chain.</td>
+          <td>Fiat payment is processed by MoonPay (merchant of record); not recorded on-chain.</td>
         </tr>
         <tr>
           <td>Asset</td>
@@ -80,7 +80,7 @@ The two tables below show the visibility level for each field in each direction.
         <tr>
           <td>IDR Payout (Bank)</td>
           <td>Off-chain only</td>
-          <td>Bank payout is processed by Xendit; not recorded on-chain.</td>
+          <td>Bank payout is processed by MoonPay; not recorded on-chain.</td>
         </tr>
         <tr>
           <td>Asset</td>
@@ -156,10 +156,10 @@ KORAMP uses a KYC-less wallet-first model. As a result, classic Travel Rule mech
 
 | Existing step | KORAMP step |
 |---|---|
-| Send fiat | Pay via Xendit QRIS (scan and pay) |
+| Send fiat | Pay via MoonPay (card, Apple Pay, Google Pay, or bank transfer) |
 | Receive crypto | Crypto sent to destination wallet |
 | Sell crypto | Send to platform deposit address |
-| Withdraw IDR | Fiat payout to bank via Xendit Payout v3 |
+| Withdraw IDR | Fiat payout to bank via MoonPay |
 
 ## Records and Audit
 
@@ -169,16 +169,16 @@ Every significant transaction is recorded in the double-entry ledger and audit l
 |---|---|
 | AuditLog | Records important actions with actor and metadata. |
 | LedgerEntry | Double-entry records (CREDIT/DEBIT) per wallet and asset. |
-| XenditWebhook | Xendit webhook idempotency keyed on kind, event, paymentRequestId, and payoutId. |
+| MoonPayWebhook | MoonPay webhook idempotency keyed on event type, transaction id, and updatedAt. |
 
 ## Transaction Flow
 
 ### 1. On-Ramp
 
 1. User requests a TOP_UP quote.
-2. Create a Top Up order and obtain a Xendit QRIS payment payload.
-3. User scans the QRIS code and pays.
-4. Xendit webhook notifies the server that payment succeeded.
+2. Create a Top Up order and obtain a signed MoonPay widget URL (server-side HMAC-SHA256).
+3. User pays via MoonPay (card, Apple Pay, Google Pay, or bank transfer); MoonPay handles KYC for new users.
+4. MoonPay webhook (`Moonpay-Signature-V2`) notifies the server that payment succeeded.
 5. Platform sends crypto to the destination wallet.
 6. Order is marked complete when `completedAt` is set.
 
@@ -188,7 +188,7 @@ Every significant transaction is recorded in the double-entry ledger and audit l
 2. Create a Sell order and obtain the platform deposit address.
 3. User sends crypto to the deposit address.
 4. Scheduler scans the deposit and tracks confirmations.
-5. Once confirmations are sufficient, fiat payout is sent via Xendit Payout v3.
+5. Once confirmations are sufficient, fiat payout is sent via MoonPay.
 6. Order is marked complete when the payout succeeds.
 
 ## Start Integrating

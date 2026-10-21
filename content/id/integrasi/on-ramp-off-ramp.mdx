@@ -34,8 +34,8 @@ Dua tabel berikut menunjukkan tingkat visibilitas tiap bidang pada masing-masing
       <tbody>
 <tr>
            <td>Pembayaran IDR</td>
-           <td>Terlihat via Xendit</td>
-           <td>Xendit memproses pembayaran fiat dan mengirim webhook.</td>
+           <td>Terlihat via MoonPay</td>
+           <td>MoonPay memproses pembayaran fiat (merchant of record) dan mengirim webhook.</td>
          </tr>
         <tr>
           <td>Aset</td>
@@ -80,7 +80,7 @@ Dua tabel berikut menunjukkan tingkat visibilitas tiap bidang pada masing-masing
 <tr>
            <td>Pembayaran IDR</td>
            <td>Tidak berlaku</td>
-           <td>Off-Ramp memakai Xendit Payout v3 untuk payout fiat.</td>
+           <td>Off-Ramp memakai MoonPay untuk payout fiat ke bank.</td>
          </tr>
         <tr>
           <td>Aset</td>
@@ -156,10 +156,10 @@ KORAMP memakai model wallet-first tanpa KYC. Konsekuensinya, mekanisme Travel Ru
 
 | Langkah eksisting | Langkah KORAMP |
 |---|---|
-| Kirim fiat | Bayar via Xendit QRIS (transfer bank/kartu) |
+| Kirim fiat | Bayar via MoonPay (kartu/Apple Pay/Google Pay/transfer bank) |
 | Terima crypto | Crypto dikirim ke dompet tujuan |
 | Jual crypto | Kirim ke alamat deposit platform |
-| Tarik Rupiah | Payout fiat ke bank via Xendit Payout v3 |
+| Tarik Rupiah | Payout fiat ke bank via MoonPay |
 
 ## Catatan dan Audit
 
@@ -169,16 +169,16 @@ Setiap transaksi penting tercatat di ledger double-entry dan audit log:
 |---|---|
 | AuditLog | Mencatat aksi penting beserta aktor dan metadata. |
 | LedgerEntry | Pencatatan double-entry (CREDIT/DEBIT) per dompet dan aset. |
-| XenditWebhook | Idempotensi webhook Xendit berdasarkan kind, event, orderId, dan payoutId. |
+| MoonPayWebhook | Idempotensi webhook MoonPay berdasarkan event type, transaction id, dan updatedAt. |
 
 ## Alur Transaksi
 
 ### 1. On-Ramp
 
 1. Pengguna meminta quote tipe TOP_UP.
-2. Buat order Top Up dan dapatkan URL pembayaran dari Xendit QRIS.
-3. Pengguna membayar via Xendit (transfer bank atau kartu).
-4. Webhook Xendit memberi tahu pembayaran berhasil.
+2. Buat order Top Up dan dapatkan URL widget MoonPay yang sudah ditandatangani server-side (HMAC-SHA256).
+3. Pengguna membayar via MoonPay (kartu, Apple Pay, Google Pay, atau transfer bank); MoonPay menangani KYC bila pengguna baru.
+4. Webhook MoonPay (`Moonpay-Signature-V2`) memberi tahu pembayaran berhasil.
 5. Platform mengirim crypto ke dompet tujuan.
 6. Order ditandai selesai saat `completedAt` terisi.
 
@@ -188,7 +188,7 @@ Setiap transaksi penting tercatat di ledger double-entry dan audit log:
 2. Buat order Sell dan dapatkan alamat deposit platform.
 3. Pengguna mengirim crypto ke alamat deposit.
 4. Scheduler memindai deposit dan melacak konfirmasi.
-5. Setelah konfirmasi cukup, payout fiat dikirim via Xendit Payout v3.
+5. Setelah konfirmasi cukup, payout fiat dikirim via MoonPay.
 6. Order ditandai selesai saat payout berhasil.
 
 ## Mulai Integrasi

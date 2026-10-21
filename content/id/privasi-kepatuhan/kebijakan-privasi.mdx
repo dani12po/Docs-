@@ -29,7 +29,7 @@ Ledger transaksi bersifat publik. Alamat dompet disamarkan (misalnya `0x1234...a
 
 ### 6. Data pembayaran pihak ketiga
 
-Pembayaran fiat dan payout bank diproses oleh Xendit. Data pembayaran tersebut tunduk pada kebijakan privasi Xendit.
+Pembayaran fiat dan payout bank diproses oleh MoonPay (merchant of record), yang juga menangani KYC/AML. Data pembayaran dan verifikasi identitas tunduk pada kebijakan privasi MoonPay.
 
 ### 7. Analitik halaman yang menjaga privasi
 
@@ -45,7 +45,7 @@ Data disimpan di PostgreSQL (Neon) dan diproses dengan Redis untuk pembatasan la
 
 ### 10. Berbagi data
 
-Kami membagikan data hanya kepada penyedia yang diperlukan untuk memproses transaksi (misalnya Xendit) dan bila diwajibkan hukum.
+Kami membagikan data hanya kepada penyedia yang diperlukan untuk memproses transaksi (misalnya MoonPay) dan bila diwajibkan hukum.
 
 ### 11. Hak pengguna
 

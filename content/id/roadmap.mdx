@@ -20,8 +20,8 @@ Setiap fase memiliki badge status:
 
 Fase awal KORAMP menghadirkan ramp wallet-first lengkap untuk Top Up dan Sell.
 
-- Top Up via Xendit QRIS menjadi crypto ke dompet.
-- Sell via deposit crypto menjadi payout IDR ke bank via Xendit Payout v3.
+- Top Up via MoonPay (fiat to crypto) — kartu kredit/debit, Apple Pay, Google Pay, dan transfer bank. MoonPay sebagai merchant of record yang menangani KYC/AML dan compliance.
+- Sell via deposit crypto ke platform → konfirmasi on-chain → payout IDR ke bank via MoonPay.
 - Aset SOL, ETH, dan BNB di testnet (Solana Devnet, Base Sepolia, BSC Testnet).
 - Quote dengan harga terkunci (spread, biaya layanan, biaya jaringan, pajak).
 - Progressive IP ban dan Redis rate limiting.
@@ -51,7 +51,7 @@ Program reward berbasis transaksi sedang berjalan, dengan payout bersifat DRY-RU
 - Pilot integrasi MoonPay Widget — alur on-ramp (beli crypto) dan off-ramp (jual crypto) dengan dukungan multi-mata uang fiat (IDR, USD, EUR, dan lainnya).
 - Platform web dalam tahap beta testing tertutup; akses dibatasi sambil memvalidasi stabilitas, keamanan, dan pengalaman pengguna sebelum peluncuran publik.
 - Keamanan transaksi diperkuat dengan URL signing HMAC-SHA256 dan verifikasi signature webhook MoonPay untuk integritas data end-to-end.
-- Arsitektur dirancang modular: MoonPay berfungsi sebagai jalur alternatif di samping QRIS native, sehingga transisi ke produksi dapat dilakukan per-wilayah tanpa mengganggu alur yang sudah berjalan.
+- Arsitektur dirancang modular: MoonPay berfungsi sebagai payment gateway utama, mendukung on-ramp (buy) dan off-ramp (sell) di seluruh wilayah yang didukung.
 
 ## Fase 3 — Direncanakan
 
@@ -72,7 +72,7 @@ Visi jangka panjang KORAMP untuk ekosistem yang lebih luas.
 
 - Tooling kepatuhan, AML, dan Travel Rule.
 - API merchant/hosted-checkout untuk pihak ketiga.
-- Rail fiat tambahan selain Xendit QRIS.
+- Rail fiat tambahan selain MoonPay.
 - Rail payout yang diperluas.
 - Dokumentasi multi-bahasa.
 - SDK publik.

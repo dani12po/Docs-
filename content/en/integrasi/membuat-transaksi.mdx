@@ -1,6 +1,6 @@
 ---
 title: "Creating Transactions"
-description: "End-to-end guide for creating transactions in KORAMP: quotes, Top Up and Sell orders, Xendit payment, crypto delivery, and testnet code samples."
+description: "End-to-end guide for creating transactions in KORAMP: quotes, Top Up and Sell orders, payment via MoonPay, crypto delivery, and testnet code samples."
 ---
 
 ## Overview
@@ -9,10 +9,10 @@ Every KORAMP transaction goes through the same four stages:
 
 1. **Quote** — a locked price is created for an IDR or crypto amount.
 2. **Order** — an order is created by atomically consuming the quote (single use).
-3. **Payment / deposit** — the user pays (Top Up via Xendit QRIS) or sends crypto (Sell).
-4. **Settlement** — the platform sends crypto (Top Up) or pays out IDR to a bank (Sell).
+3. **Payment / deposit** — the user pays (Top Up via MoonPay) or sends crypto (Sell).
+4. **Settlement** — the platform sends crypto (Top Up) or pays out IDR to a bank via MoonPay (Sell).
 
-All examples below use testnet networks and the base URL `https://your-koramp-instance/api`.
+MoonPay acts as the **merchant of record** for the fiat side — processing payments, KYC, AML, and compliance — while KORAMP handles the crypto side (delivery, deposits, confirmations, and the ledger). All examples below use testnet networks and the base URL `https://your-koramp-instance/api`.
 
 ## Test Prerequisites
 
@@ -77,12 +77,12 @@ Sample response (200):
 ```
 
 <Callout type="info" title="Single-use quote">
-Once used to create an order, the quote is marked consumed and cannot be reused. Save the `quoteId` — it's required when creating the order.
+Once used to create an order, the quote is marked consumed and cannot be reused. Save the `quoteId` — it is required when creating the order.
 </Callout>
 
 ## Step 2 — Create a Top Up Order
 
-The Top Up order and the Xendit payment request are created server-side.
+The Top Up order and the MoonPay payment session are created server-side. The backend signs the MoonPay widget URL with the Secret Key (HMAC-SHA256) and returns a signed URL to the client.
 
 ```bash
 curl -X POST https://your-koramp-instance/api/orders/topup \
@@ -112,9 +112,10 @@ Sample response (201):
   },
   "payment": {
     "status": "PENDING",
-    "qrPayload": "00020101021226...",
+    "widgetUrl": "https://buy-sandbox.moonpay.com/?apiKey=pk_test_...&currencyCode=eth&walletAddress=0x1234...abcd&signature=...",
     "requestedAmount": 500000
-  }
+  },
+  "providerOrderId": "mp_txn_000123"
 }
 ```
 
@@ -122,12 +123,13 @@ Sample response (201):
 Minimum and maximum order limits are set per asset and read from fee configuration. Out-of-range amounts are rejected at order creation.
 </Callout>
 
-## Step 3 — Pay via Xendit QRIS
+## Step 3 — Pay via MoonPay
 
-1. Render the `qrPayload` string from the order response as a QR code in your app or checkout page.
-2. The user scans the QRIS code with their banking/e-wallet app and pays.
-3. Xendit sends a webhook to the KORAMP server when payment succeeds.
-4. The server independently verifies the amount, then triggers crypto delivery to the destination wallet.
+1. Open `widgetUrl` from the order response in the browser, or embed the MoonPay widget in your app (`overlay` or `embedded` variant).
+2. Complete MoonPay KYC if the user is new (MoonPay as merchant of record handles identity verification).
+3. Choose a payment method available in the user's region — credit/debit card, Apple Pay, Google Pay, or bank transfer.
+4. MoonPay sends a webhook to the KORAMP server when payment succeeds (header `Moonpay-Signature-V2`).
+5. The server verifies the webhook signature and amount independently, then triggers crypto delivery to the destination wallet.
 
 Crypto delivery is handled automatically by the platform. You just monitor the status.
 
@@ -201,11 +203,9 @@ curl -X POST https://your-koramp-instance/api/orders/kms-3n7q1w5e/submit-tx \
 
 The backend independently verifies the hash: sender, recipient, amount, and receipt status. Invalid hashes are rejected and logged to the audit log.
 
-5. **Automatic payout** — once on-chain confirmations reach `requiredConfirmations`, IDR is transferred to the bank account via Xendit Payout v3.
+5. **Automatic payout** — once on-chain confirmations reach `requiredConfirmations`, IDR is transferred to the bank account via MoonPay.
 
 ## TypeScript Client Example
-
-Helper sample to test the full flow from an app or script:
 
 ```typescript
 const BASE_URL = "https://your-koramp-instance/api";
@@ -230,7 +230,7 @@ async function createTopUpOrder(walletAddress: string) {
   });
 
   if (!res.ok) throw new Error(`Order failed: ${res.status}`);
-  return res.json(); // { order, payment }
+  return res.json(); // { order, payment, providerOrderId }
 }
 
 async function pollUntilDone(publicId: string, tries = 20) {
@@ -242,27 +242,20 @@ async function pollUntilDone(publicId: string, tries = 20) {
   }
   throw new Error("Timeout waiting for settlement");
 }
-
-async function testDelivery(publicId: string) {
-  const res = await fetch(`${BASE_URL}/orders/${publicId}/check-delivery`, { method: "POST" });
-  return res.json(); // { status, txHash?, confirmations? }
-}
 ```
 
-## Testnet Test Checklist
-
-Use this checklist to test the end-to-end flow before production:
+## Testnet Checklist
 
 | # | Scenario | Verified |
 |---|---|---|
-| 1 | Create a quote then a Top Up order | Quote consumed atomically; cannot be used twice. |
-| 2 | Pay the QRIS `qrPayload` | Webhook received; amount verified; crypto sent. |
+| 1 | Create quote then Top Up order | Quote consumed atomically; cannot be used twice. |
+| 2 | Pay via MoonPay widget (sandbox) | Webhook received & signature verified; amount verified; crypto sent. |
 | 3 | Order stuck at `CRYPTO_PROCESSING` | `check-delivery` resumes without double-broadcast. |
-| 4 | Create a Sell order | Unique deposit address per order; bank details stored. |
+| 4 | Create Sell order | Unique deposit address per order; bank details stored. |
 | 5 | Send crypto then `submit-tx` | Hash verified on-chain (from/to/amount/receipt). |
-| 6 | Submit a tx hash from another wallet | Rejected: `from` must match the order wallet. |
-| 7 | Repeat `submit-tx` with the same hash | Idempotent — no double-processing. |
-| 8 | Fulfill confirmations | Payout triggered automatically via Xendit Payout v3. |
+| 6 | Submit tx hash from another wallet | Rejected: `from` must match the order wallet. |
+| 7 | Repeat `submit-tx` with same hash | Idempotent — no double-processing. |
+| 8 | Fulfill confirmations | Payout triggered automatically via MoonPay. |
 | 9 | Let the order expire | Order ends with `failureReason`; doesn't hang. |
 
 <Callout type="warning" title="Don't test on mainnet">
@@ -273,17 +266,17 @@ All testing must be done on testnet (Solana Devnet, Base Sepolia, BSC Testnet). 
 
 | Status | Meaning |
 |---|---|
-| `PAYMENT_PENDING` | Awaiting Xendit QRIS payment (Top Up). |
+| `PAYMENT_PENDING` | Awaiting MoonPay payment (Top Up). |
 | `CRYPTO_PROCESSING` | Payment received; crypto being sent/confirmed. |
 | `AWAITING_CRYPTO` | Awaiting crypto deposit from the user (Sell). |
 | `CRYPTO_DETECTED` | Deposit seen on-chain, not enough confirmations yet. |
 | `CONFIRMING` | Confirmations progressing toward `requiredConfirmations`. |
 | `CRYPTO_CONFIRMED` | Confirmations sufficient; payout being processed. |
 | `COMPLETED` | Transaction complete. |
-| `FAILED` / `PAYMENT_CREATE_FAILED` | Failed; see `failureReason` for details. |
+| `FAILED` or `PAYMENT_CREATE_FAILED` | Failed; see `failureReason` for details. |
 
 ## Next Steps
 
 - See [Quote & Pricing](/docs/en/integrasi/quote-pricing) for price components.
-- See [Transaction Flow](/docs/en/integrasi/alur-transaksi) for technical details of each stage.
+- See [Transaction Flow](/docs/en/integrasi/alur-transaksi) for technical details.
 - See [On-Ramp & Off-Ramp](/docs/en/integrasi/on-ramp-off-ramp) for visibility and compliance.
