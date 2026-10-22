@@ -1,17 +1,29 @@
 ---
 title: "MoonPay Widget"
-description: "Integrate the MoonPay Widget as the primary payment gateway for KORAMP on-ramp (buy crypto) and off-ramp (sell crypto). MoonPay acts as the merchant of record, handling KYC/AML, fraud, and compliance."
+description: "Technical guide for MoonPay Widget integration. Note: MoonPay requires KYC and IDR/QRIS support is unconfirmed — Xendit remains KORAMP's active payment gateway."
 ---
+
+<Callout type="warning" title="Status: Under Evaluation">
+  MoonPay is **not yet active** in KORAMP. This page is a technical guide for a potential future integration.
+
+  **Two critical blockers must be resolved before implementation:**
+  1. MoonPay **requires KYC** for all users — this conflicts with KORAMP's wallet-first, no-account principle.
+  2. MoonPay **does not confirm IDR or QRIS support** (Indonesian payment methods). MoonPay's official documentation does not list IDR as a supported fiat currency.
+
+  **Currently active gateway: Xendit QRIS (on-ramp) + Xendit Payout v3 (off-ramp).**
+
+  Verify with MoonPay Business whether IDR and QRIS are supported before proceeding with integration.
+</Callout>
 
 ## Overview
 
 The MoonPay Widget lets users **buy (on-ramp)** and **sell (off-ramp)** cryptocurrency directly inside your application. As the **merchant of record**, MoonPay takes full responsibility for fraud, chargebacks, KYC/AML, and regulatory compliance in every supported region.
 
-Within KORAMP, MoonPay serves as the **primary payment gateway** for on-ramp and off-ramp crypto. KORAMP remains wallet-first — the wallet address is the user's identity; no account or password is required.
+**Key architectural difference from Xendit:**
+- With Xendit: KORAMP collects IDR payment → KORAMP sends crypto from its hot wallet to the user
+- With MoonPay: MoonPay handles everything (KYC, payment, crypto delivery) → KORAMP only provides the wallet address and receives webhook notifications
 
-<Callout type="info" title="MoonPay as the primary gateway">
-  MoonPay is KORAMP's primary payment gateway — handling KYC, fraud, and compliance as the merchant of record. Feature availability depends on the region and assets supported by MoonPay.
-</Callout>
+Consequence: with MoonPay on-ramp, KORAMP no longer needs a hot wallet to send crypto. However, KYC becomes mandatory for users.
 
 ## Prerequisites
 

@@ -1,17 +1,29 @@
 ---
 title: "MoonPay Widget"
-description: "Integrasi MoonPay Widget sebagai payment gateway utama KORAMP untuk on-ramp (beli crypto) dan off-ramp (jual crypto). MoonPay bertindak sebagai merchant of record yang menangani KYC/AML, fraud, dan compliance."
+description: "Panduan integrasi MoonPay Widget sebagai payment gateway opsional. Catatan: MoonPay wajib KYC dan belum terkonfirmasi mendukung IDR/QRIS — Xendit tetap menjadi gateway aktif KORAMP."
 ---
+
+<Callout type="warning" title="Status: Sedang Dievaluasi">
+  MoonPay **belum diaktifkan** di KORAMP. Halaman ini adalah panduan teknis untuk integrasi di masa mendatang.
+
+  **Dua hal penting yang perlu diverifikasi sebelum implementasi:**
+  1. MoonPay **mewajibkan KYC** untuk semua pengguna — ini bertentangan dengan prinsip wallet-first KORAMP (tanpa akun, tanpa KYC).
+  2. MoonPay **belum terkonfirmasi mendukung IDR atau QRIS** (metode pembayaran Indonesia). Dokumentasi resmi MoonPay tidak mencantumkan IDR sebagai fiat yang didukung.
+
+  **Gateway aktif saat ini: Xendit QRIS (on-ramp) + Xendit Payout v3 (off-ramp).**
+
+  Konfirmasi dengan MoonPay Business apakah IDR dan QRIS didukung sebelum melanjutkan integrasi.
+</Callout>
 
 ## Overview
 
 MoonPay Widget memungkinkan pengguna untuk **membeli (on-ramp)** dan **menjual (off-ramp)** cryptocurrency langsung di dalam aplikasi Anda. Sebagai **merchant of record**, MoonPay menanggung tanggung jawab penuh atas fraud, chargeback, KYC/AML, serta memastikan kepatuhan terhadap regulasi yang berlaku di setiap wilayah.
 
-Di KORAMP, MoonPay berfungsi sebagai **payment gateway utama** untuk on-ramp dan off-ramp crypto. KORAMP tetap bersifat wallet-first — alamat dompet adalah identitas pengguna, tidak ada akun atau password.
+**Perbedaan arsitektur penting dibanding Xendit:**
+- Dengan Xendit: KORAMP menerima pembayaran IDR → KORAMP mengirim crypto dari hot wallet ke user
+- Dengan MoonPay: MoonPay menangani segalanya (KYC, pembayaran, pengiriman crypto) → KORAMP hanya menyediakan wallet address dan menerima webhook notifikasi
 
-<Callout type="info" title="MoonPay sebagai payment gateway utama">
-  MoonPay adalah payment gateway utama KORAMP — menangani KYC, fraud, dan compliance sebagai merchant of record. Ketersediaan fitur bergantung pada wilayah dan aset yang didukung MoonPay.
-</Callout>
+Konsekuensinya: jika menggunakan MoonPay on-ramp, KORAMP tidak lagi perlu hot wallet untuk mengirim crypto. Namun KYC menjadi wajib bagi pengguna.
 
 ## Prasyarat
 
